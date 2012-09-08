@@ -76,6 +76,12 @@ sub minimum_home_with_ssh {
     `mkdir -p '$repo/.ssh/config'`;
     `echo "sshignore" > '$repo/.ssh/.gitignore'`;
 
+    chdir($repo);
+    `git add .dfminstall`;
+    `git add .ssh`;
+    `git commit -m 'ssh additions'`;
+    chdir($Bin);
+
     return ( $home, $repo );
 }
 
@@ -105,6 +111,11 @@ sub run_dfm {
         $ENV{HOME} = $home;
         DFM::run_dfm( "$repo/bin", @args );
     };
+
+    # TODO: enable this and clean up any warning seen
+    #if (length($trap->stderr) > 0) {
+    #diag($trap->stderr);
+    #}
 }
 
 1;

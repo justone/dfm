@@ -20,7 +20,7 @@ subtest 'help works on all subcommands' => sub {
 
     my ( $home, $repo ) = minimum_home('help');
 
-    foreach my $command (qw(install mergeandinstall updates)) {
+    foreach my $command (qw(install mergeandinstall updates import)) {
         run_dfm( $home, $repo, $command, '--help' );
         like(
             $trap->stdout,
