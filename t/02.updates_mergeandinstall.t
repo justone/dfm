@@ -9,6 +9,9 @@ use Test::Trap qw/ :output(systemsafe) /;
 
 require "$Bin/helper.pl";
 
+# unset the repo env override so that test work properly
+$ENV{'DFM_REPO'} = undef;
+
 my $file_slurp_available = load_mod('File::Slurp qw(read_file)');
 
 check_minimum_test_more_version();

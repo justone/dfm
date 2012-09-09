@@ -37,11 +37,23 @@ sub run_dfm {
         $command = 'install';
     }
 
+    # parse global options first
+    Getopt::Long::Configure('pass_through');
+    GetOptionsFromArray( \@argv, \%opts, 'verbose', 'quiet', 'dry-run',
+        'help', 'version' );
+    Getopt::Long::Configure('no_pass_through');
+
     $home = realpath( $ENV{HOME} );
 
-    $repo_dir = $realbin;
-    $repo_dir =~ s/$home\///;
-    $repo_dir =~ s/\/bin//;
+    if ( $ENV{'DFM_REPO'} ) {
+        $repo_dir = $ENV{'DFM_REPO'};
+        $repo_dir =~ s/$home\///;
+    }
+    else {
+        $repo_dir = $realbin;
+        $repo_dir =~ s/$home\///;
+        $repo_dir =~ s/\/bin//;
+    }
 
     DEBUG("Repo dir: $repo_dir");
 
@@ -50,12 +62,6 @@ sub run_dfm {
     if ( lc($OSNAME) eq 'darwin' ) {
         $profile_filename = '.profile';
     }
-
-    # parse global options first
-    Getopt::Long::Configure('pass_through');
-    GetOptionsFromArray( \@argv, \%opts, 'verbose', 'quiet', 'dry-run',
-        'help', 'version' );
-    Getopt::Long::Configure('no_pass_through');
 
     if ( $opts{'help'} ) {
         show_usage();

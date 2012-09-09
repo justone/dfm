@@ -10,6 +10,9 @@ use Test::Trap qw/ :output(systemsafe) /;
 
 require "$Bin/helper.pl";
 
+# unset the repo env override so that test work properly
+$ENV{'DFM_REPO'} = undef;
+
 my $file_slurp_available = load_mod('File::Slurp qw(read_file)');
 
 check_minimum_test_more_version();
@@ -295,6 +298,27 @@ subtest 'chmod option' => sub {
         is( ( sprintf "%04o", S_IMODE( ( stat("$repo/.ssh/config") )[2] ) ),
             '0644', 'permissions are untouched' );
     };
+};
+
+subtest 'repo dir env override' => sub {
+    focus('repo_dir_override');
+
+    my ( $home, $repo, $origin );
+    ( $home, $repo, $origin ) = minimum_home('first');
+
+    local $ENV{'DFM_REPO'} = $repo;
+
+    # simulate running dfm from the homedir instead of inside the repo
+    run_dfm( $home, $home, '--verbose' );
+
+    ok( -d "$home/.backup",      'main backup dir exists' );
+    ok( -l "$home/bin",          'bin is a symlink' );
+    ok( !-e "$home/.git",        ".git does not exist in \$home" );
+    ok( !-e "$home/.gitignore",  '.gitignore does not exist' );
+    ok( !-e "$home/.dfminstall", '.dfminstall does not exist' );
+    is( readlink("$home/bin"), '.dotfiles/bin', 'bin points into repo' );
+    ok( !-e "$home/README.md", 'no README.md in homedir' );
+    ok( !-e "$home/t",         'no t dir in homedir' );
 };
 
 done_testing;
