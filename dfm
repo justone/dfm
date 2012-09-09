@@ -49,6 +49,29 @@ sub run_dfm {
         $repo_dir = $ENV{'DFM_REPO'};
         $repo_dir =~ s/$home\///;
     }
+    elsif ( -d "$realbin/dfm_tests" ) {
+
+        # dfm is being invoked from its own repo, not a dotfiles repo; try and
+        # figure out what repo in the users's homedir is the dotfiles repo
+        #
+        # TODO: alternate strategy: see if there are files in $home that are
+        # already symlinked and use those as a guide
+        foreach my $potential_dotfiles_repo (qw(.dotfiles dotfiles)) {
+            if (   -d "$home/$potential_dotfiles_repo"
+                && -d "$home/$potential_dotfiles_repo/.git" )
+            {
+                $repo_dir = "$home/$potential_dotfiles_repo";
+                $repo_dir =~ s/$home\///;
+            }
+        }
+
+        if ( !$repo_dir ) {
+            ERROR(
+                "unable to discover dotfiles repo and dfm is running from its own repo"
+            );
+            exit -2;
+        }
+    }
     else {
         $repo_dir = $realbin;
         $repo_dir =~ s/$home\///;
