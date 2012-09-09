@@ -1,36 +1,23 @@
 [![Build Status](https://secure.travis-ci.org/justone/dotfiles.png?branch=master)](http://travis-ci.org/justone/dotfiles/)
 
-# Dotfiles
+# dfm - a utility to manage dotfiles
 
 ## Overview
 
-This repo is a skeleton/template/vanilla version of my dotfiles.  It contains a
-utility to help with managing and updating your dotfiles like I manage mine.
+dfm is a small utility that manages dotfiles.  It:
 
-## Using this repo
+* makes it easy to install (and uninstall) your dotfiles on new servers
+* easys fetching and merging changes that were pushed from other machines
+* simplifies working with your dotfiles repository, no matter where your current directory is
 
-First, fork this repo.
+## Using dfm
 
-Then, add your dotfiles:
-
-    $ git clone git@github.com:username/dotfiles.git .dotfiles
-    $ cd .dotfiles
-    $  # edit files
-    $  # edit files
-    $ git push origin master
-
-Finally, to install your dotfiles onto a new system:
-
-    $ cd $HOME
-    $ git clone git@github.com:username/dotfiles.git .dotfiles
-    $ ./.dotfiles/bin/dfm  # creates symlinks to install files
+dfm works best when it's included in your dotfiles repository.  If you don't
+have a dotfiles repository already, you can use [this starter
+repository](https://github.com/justone/dotfiles).
 
 ## Full documentation
 
 For more information, check out the [wiki](http://github.com/justone/dotfiles/wiki).
 
-You can also run <tt>dfm --help</tt>.
-
-## My dotfiles
-
-My dotfiles are in the <tt>personal</tt> branch.
+You can also run <tt>dfm \--help</tt>.
