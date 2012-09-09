@@ -8,7 +8,7 @@ use Test::More;
 BEGIN {
 
     package DFM;
-    require "bin/dfm";
+    require "dfm";
     die $@ if $@;
 }
 
@@ -29,7 +29,7 @@ sub simple_repo {
     `mkdir -p '$repo/t'`;
     `echo "ignore" > '$repo/.gitignore'`;
     `echo "readme contents" > '$repo/README.md'`;
-    `cp $Bin/../bin/dfm '$repo/bin'`;
+    `cp $Bin/../dfm '$repo/bin'`;
 
     chdir($repo);
     `git init`;
