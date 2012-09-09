@@ -1,4 +1,4 @@
-[![Build Status](https://secure.travis-ci.org/justone/dotfiles.png?branch=master)](http://travis-ci.org/justone/dotfiles/)
+[![Build Status](https://secure.travis-ci.org/justone/dfm.png?branch=master)](http://travis-ci.org/justone/dfm/)
 
 # dfm - a utility to manage dotfiles
 
