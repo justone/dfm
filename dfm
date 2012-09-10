@@ -49,7 +49,7 @@ sub run_dfm {
         $repo_dir = $ENV{'DFM_REPO'};
         $repo_dir =~ s/$home\///;
     }
-    elsif ( -d "$realbin/dfm_tests" ) {
+    elsif ( -e "$realbin/t/02.updates_mergeandinstall.t" ) {
 
         # dfm is being invoked from its own repo, not a dotfiles repo; try and
         # figure out what repo in the users's homedir is the dotfiles repo

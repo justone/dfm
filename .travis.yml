@@ -1,4 +1,4 @@
-script: "prove -v dfm_tests"
+script: "prove -v t"
 install: "/bin/true"
 language: perl
 perl:
