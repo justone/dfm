@@ -6,7 +6,6 @@ use English qw( -no_match_vars );    # Avoids regex performance penalty
 use Data::Dumper;
 use FindBin qw($RealBin);
 use Getopt::Long;
-use Getopt::Long qw(GetOptionsFromArray);
 use Cwd qw(realpath getcwd);
 use File::Spec;
 
@@ -597,6 +596,15 @@ END
 
 sub show_version {
     print "dfm version $VERSION\n";
+}
+
+# work-alike for function from perl 5.8.9 and later
+# added for compatibility with CentOS 5, which is stuck on 5.8.8
+sub GetOptionsFromArray {
+    my ( $argv, $opts, @options ) = @_;
+
+    local @ARGV = @$argv;
+    GetOptions( $opts, @options );
 }
 
 1;
