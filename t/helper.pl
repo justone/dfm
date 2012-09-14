@@ -55,6 +55,7 @@ sub minimum_home {
 
     # create homedir
     `mkdir -p '$home'`;
+    `echo "[user]\n\tname = Test User\n\temail = test\@test.com" > '$home/.gitconfig'`;
 
     `git clone 'file://$origin_repo_path' '$repo'`;
 
