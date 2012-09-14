@@ -186,25 +186,26 @@ subtest 'non origin remote' => sub {
     my ( $home2, $repo2, $origin2 ) = minimum_home('host2');
 
     # first, make a personal branch in repo 1, and add a new file
-    `HOME=$home perl $repo/bin/dfm checkout -b personal`;
+    run_dfm( $home, $repo, qw/checkout -b personal/ );
     add_file( $home, $repo, 'testfile' );
-    `HOME=$home perl $repo/bin/dfm push origin personal 2> /dev/null`;
+    run_dfm( $home, $repo, qw(push origin personal) );
 
     # on the second host, add the first as a remote
     # and install from the personal branch
-    `HOME=$home2 perl $repo2/bin/dfm remote add upstream $origin`;
-    `HOME=$home2 perl $repo2/bin/dfm fetch upstream`;
-    `HOME=$home2 perl $repo2/bin/dfm checkout -b personal upstream/personal`;
-    `HOME=$home2 perl $repo2/bin/dfm install`;
+    run_dfm( $home2, $repo2, qw/remote add upstream/, $origin );
+    run_dfm( $home2, $repo2, qw/fetch upstream/ );
+    run_dfm( $home2, $repo2, qw(checkout -b personal upstream/personal) );
+    run_dfm( $home2, $repo2, qw/install/ );
 
     # next, make a change in the first, on the personal branch
     add_file( $home, $repo, 'testfile2', 'contents2' );
-    `HOME=$home perl $repo/bin/dfm push origin personal 2> /dev/null`;
+    run_dfm( $home, $repo, qw/push origin personal/ );
 
     # and finally, run updates to make sure we can pull
     # from the non-origin upstream
-    my $output = `HOME=$home2 perl $repo2/bin/dfm updates 2> /dev/null`;
-    like( $output, qr/adding testfile2/, 'message in output' );
+    run_dfm( $home2, $repo2, qw/updates/ );
+
+    like( $trap->stdout, qr/adding testfile2/, 'message in output' );
 };
 
 subtest 'non origin remote different name' => sub {
@@ -272,9 +273,7 @@ sub add_file_and_push {
 
     add_file( $home, $repo, $filename, $contents );
 
-    chdir($home);
-    `HOME='$home' perl '$repo/bin/dfm' push origin master 2> /dev/null`;
-    chdir($Bin);
+    run_dfm( $home, $repo, qw/push origin master/ );
 }
 
 sub add_file {
@@ -286,7 +285,7 @@ sub add_file {
     chdir($home);
     `echo '$contents' > '$filename'`;
     `mv $filename '$repo/$filename'`;
-    `HOME='$home' perl '$repo/bin/dfm' add '$filename'`;
-    `HOME='$home' perl '$repo/bin/dfm' commit -m 'adding $filename'`;
+    run_dfm( $home, $repo, 'add',         $filename );
+    run_dfm( $home, $repo, qw/commit -m/, "adding $filename" );
     chdir($Bin);
 }
