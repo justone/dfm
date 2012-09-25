@@ -68,7 +68,7 @@ sub run_dfm {
             ERROR(
                 "unable to discover dotfiles repo and dfm is running from its own repo"
             );
-            exit -2;
+            exit(-2);
         }
     }
     else {
