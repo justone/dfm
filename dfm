@@ -10,7 +10,7 @@ use Cwd qw(realpath getcwd);
 use File::Spec;
 use File::Copy;
 
-our $VERSION = '0.5';
+our $VERSION = '0.6';
 
 run_dfm( $RealBin, @ARGV ) unless defined caller;
 
