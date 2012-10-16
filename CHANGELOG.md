@@ -1,3 +1,7 @@
+# v0.7 (unreleased)
+
+* better parsing of arguments to preserve all arguments passed through to git subcommands
+
 # v0.6 2012-09-30
 
 * Added import subcommand to add new files.

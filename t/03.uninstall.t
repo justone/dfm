@@ -39,7 +39,7 @@ SKIP: {
             "loader present in $profile_filename" );
     }
 
-    run_dfm( $home, $repo, '--verbose', 'uninstall' );
+    run_dfm( $home, $repo, 'uninstall', '--verbose' );
 
     ok( !-l "$home/bin",            'bin is no longer a symlink' );
     ok( -e "$home/bin/preexisting", 'bin from backup is restored' );

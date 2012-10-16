@@ -12,12 +12,72 @@ use File::Copy;
 
 our $VERSION = '0.6';
 
-run_dfm( $RealBin, @ARGV ) unless defined caller;
-
 my %opts;
 my $profile_filename;
 my $repo_dir;
 my $home;
+
+my $commands = {
+    'install' => sub {
+        DEBUG("Running in [$RealBin] and installing in [$home]");
+
+        # install files
+        install( $home, $repo_dir );
+    },
+    'updates' => sub {
+        my $argv = shift;
+
+        GetOptionsFromArray( $argv, \%opts, 'no-fetch' );
+
+        fetch_updates( \%opts );
+    },
+    'mergeandinstall' => sub {
+        my $argv = shift;
+
+        GetOptionsFromArray( $argv, \%opts, 'merge', 'rebase' );
+
+        merge_and_install( \%opts );
+    },
+    'updatemergeandinstall' => sub {
+        my $argv = shift;
+
+        GetOptionsFromArray( $argv, \%opts, 'merge', 'no-fetch' );
+
+        fetch_updates( \%opts );
+        merge_and_install( \%opts );
+    },
+    'uninstall' => sub {
+        my $argv = shift;
+
+        INFO( "Uninstalling dotfiles..."
+                . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
+
+        DEBUG("Running in [$RealBin] and installing in [$home]");
+
+        # uninstall files
+        uninstall_files( $home . '/' . $repo_dir, $home );
+
+        # remove the bash loader
+        unconfigure_bash_loader();
+    },
+    'import' => sub {
+        my $argv = shift;
+
+        GetOptionsFromArray( $argv, \%opts, 'message=s', 'no-commit|n' );
+
+        #DEBUG("Running in [$RealBin] and installing in [$home]");
+        shift @$argv;    # toss the 'import' at the beginning of the array
+
+        # import files
+        import_files( $home . '/' . $repo_dir, $home, $argv );
+    },
+};
+$commands->{'mi'}  = $commands->{'mergeandinstall'};
+$commands->{'umi'} = $commands->{'updatemergeandinstall'};
+$commands->{'un'}  = $commands->{'uninstall'};
+$commands->{'im'}  = $commands->{'import'};
+
+run_dfm( $RealBin, @ARGV ) unless defined caller;
 
 sub run_dfm {
     my ( $realbin, @argv ) = @_;
@@ -28,21 +88,29 @@ sub run_dfm {
 
     my $command;
 
-    foreach my $arg (@argv) {
-        next if $arg =~ /^-/;
-        $command = $arg;
-        last;    # once we find the command, stop looking
-    }
+    if ( $argv[0] =~ /^-/ ) {
 
-    if ( !$command ) {
+       # check to make sure there's not a dfm subcommand later in the arg list
+        if ( grep { exists $commands->{$_} } @argv ) {
+            ERROR("The command should be first.");
+            exit(-2);
+        }
         $command = 'install';
     }
+    else {
+        $command = $argv[0];
+    }
 
-    # parse global options first
-    Getopt::Long::Configure('pass_through');
-    GetOptionsFromArray( \@argv, \%opts, 'verbose', 'quiet', 'dry-run',
-        'help', 'version' );
-    Getopt::Long::Configure('no_pass_through');
+    if ( exists $commands->{$command} ) {
+
+        # parse global options first
+        Getopt::Long::Configure('pass_through');
+        GetOptionsFromArray(
+            \@argv,    \%opts, 'verbose', 'quiet',
+            'dry-run', 'help', 'version'
+        );
+        Getopt::Long::Configure('no_pass_through');
+    }
 
     $home = realpath( $ENV{HOME} );
 
@@ -87,59 +155,17 @@ sub run_dfm {
         $profile_filename = '.profile';
     }
 
-    if ( $opts{'help'} ) {
-        show_usage();
-        exit;
-    }
+    if ( exists $commands->{$command} ) {
+        if ( $opts{'help'} ) {
+            show_usage();
+            exit;
+        }
 
-    if ( $opts{'version'} ) {
-        show_version();
-        exit;
-    }
-
-    if ( $command eq 'install' ) {
-
-        DEBUG("Running in [$RealBin] and installing in [$home]");
-
-        # install files
-        install( $home, $repo_dir );
-    }
-    elsif ( $command eq 'updates' ) {
-        GetOptionsFromArray( \@argv, \%opts, 'no-fetch' );
-
-        fetch_updates( \%opts );
-    }
-    elsif ( $command eq 'mi' || $command eq 'mergeandinstall' ) {
-        GetOptionsFromArray( \@argv, \%opts, 'merge', 'rebase' );
-
-        merge_and_install( \%opts );
-    }
-    elsif ( $command eq 'umi' || $command eq 'updatemergeandinstall' ) {
-        GetOptionsFromArray( \@argv, \%opts, 'merge', 'no-fetch' );
-
-        fetch_updates( \%opts );
-        merge_and_install( \%opts );
-    }
-    elsif ( $command eq 'un' || $command eq 'uninstall' ) {
-        INFO( "Uninstalling dotfiles..."
-                . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
-
-        DEBUG("Running in [$RealBin] and installing in [$home]");
-
-        # uninstall files
-        uninstall_files( $home . '/' . $repo_dir, $home );
-
-        # remove the bash loader
-        unconfigure_bash_loader();
-    }
-    elsif ( $command eq 'im' || $command eq 'import' ) {
-        GetOptionsFromArray( \@argv, \%opts, 'message=s', 'no-commit|n' );
-
-        #DEBUG("Running in [$RealBin] and installing in [$home]");
-        shift @argv;    # toss the 'import' at the beginning of the array
-
-        # import files
-        import_files( $home . '/' . $repo_dir, $home, \@argv );
+        if ( $opts{'version'} ) {
+            show_version();
+            exit;
+        }
+        $commands->{$command}->( \@argv );
     }
     else {
 
@@ -346,7 +372,7 @@ sub install_files {
                 $recurse_options = {
                     install_only => [
                         map { s/^$recurse\///; $_ }
-                            grep {/^$recurse/} @$install_only
+                        grep {/^$recurse/} @$install_only
                     ]
                 };
             }

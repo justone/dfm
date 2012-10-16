@@ -321,6 +321,20 @@ subtest 'repo dir env override' => sub {
     ok( !-e "$home/t",         'no t dir in homedir' );
 };
 
+subtest 'command first' => sub {
+    focus('command_first');
+
+    my ( $home, $repo, $origin ) = minimum_home('simple');
+
+    run_dfm( $home, $repo, '--verbose', 'install' );
+
+    like(
+        $trap->stdout,
+        qr/command should be first/,
+        'correct error message'
+    );
+};
+
 done_testing;
 
 sub check_ssh_recurse {
