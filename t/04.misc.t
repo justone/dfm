@@ -20,18 +20,20 @@ subtest 'help works on all subcommands' => sub {
 
     my ( $home, $repo ) = minimum_home('help');
 
-    foreach my $command (qw(install mergeandinstall updates import)) {
-        run_dfm( $home, $repo, $command, '--help' );
+    foreach my $command (
+        qw(install mergeandinstall mi updatemergeandinstall umi updates import im uninstall un)
+        )
+    {
+        run_dfm( $home, $repo, 'help', $command );
         like(
             $trap->stdout,
-            qr/Usage.*For full documentation/msi,
-            "help ok for subcommand $command"
+            qr/All Options/ms,
+            "all options section for $command"
         );
-        like(
-            $trap->stdout,
-            qr/dfm version $version/msi,
-            "version number ok"
-        );
+        like( $trap->stdout, qr/Examples/ms,
+            "examples section for $command" );
+        like( $trap->stdout, qr/Description/ms,
+            "description section for $command" );
     }
 };
 

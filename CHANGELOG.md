@@ -1,5 +1,7 @@
 # v0.7 (unreleased)
 
+* add help subcommand and refactor help handling
+* make 'help' the default subcommand (seth--)
 * better parsing of arguments to preserve all arguments passed through to git subcommands
 
 # v0.6 2012-09-30

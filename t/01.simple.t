@@ -27,7 +27,7 @@ subtest 'simplest' => sub {
     ( $home, $repo ) = minimum_home( 'simple2', { origin => $origin } );
     `touch $repo/.bashrc.load`;    # make sure there's a loader
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     ok( -d "$home/.backup",      'main backup dir exists' );
     ok( -l "$home/bin",          'bin is a symlink' );
@@ -55,7 +55,7 @@ subtest 'dangling symlinks' => sub {
     symlink( ".dotfiles/.other",         "$home/.other" );
     symlink( "../.dotfiles/.ssh/.other", "$home/.ssh/.other" );
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     ok( !-l "$home/.other",      'dangling symlink is gone' );
     ok( !-l "$home/.ssh/.other", 'dangling symlink is gone' );
@@ -67,7 +67,7 @@ subtest 'with . ssh recurse( no . ssh dir )' => sub {
     my ( $home, $repo ) = minimum_home_with_ssh( 'ssh_no', 1 );
     `touch $repo/.bashrc.load`;    # make sure there's a loader
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     check_ssh_recurse($home);
 };
@@ -78,7 +78,7 @@ subtest 'with .ssh recurse (with .ssh dir)' => sub {
     my ( $home, $repo ) = minimum_home_with_ssh('ssh_with');
     `touch $repo/.bashrc.load`;    # make sure there's a loader
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     check_ssh_recurse($home);
 };
@@ -93,7 +93,7 @@ subtest 'with bin recurse' => sub {
     `mkdir -p $home/bin`;
     `echo "another bin" > $home/bin/another`;
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     ok( -d "$home/.backup", 'main backup dir exists' );
     ok( -d "$home/bin",     'bin is a directory' );
@@ -111,7 +111,7 @@ subtest 'check deprecated recursion' => sub {
         = minimum_home( 'deprecated_recurse',
         { dfminstall_contents => 'bin' } );
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     like(
         $trap->stdout,
@@ -129,7 +129,7 @@ subtest 'check deprecated recursion' => sub {
         = minimum_home( 'deprecated_recurse',
         { dfminstall_contents => 'bin recurse' } );
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     unlike(
         $trap->stdout,
@@ -145,14 +145,14 @@ subtest 'switch to recursion' => sub {
     my ( $home, $repo, $origin );
     ( $home, $repo, $origin ) = minimum_home('switch_recurse');
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     ok( -d "$home/.backup", 'main backup dir exists' );
     ok( -l "$home/bin",     'bin is a symlink' );
 
     `echo "bin recurse" >> $repo/.dfminstall`;
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     ok( -d "$home/.backup", 'main backup dir exists' );
     ok( -d "$home/bin",     'bin is a directory' );
@@ -172,7 +172,7 @@ subtest 'parallel recursions work' => sub {
     `mkdir -p $repo/test2`;
     `touch $repo/test2/file2`;
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     ok( -d "$home/test1",       'first directory present' );
     ok( -l "$home/test1/file1", 'first file is symlink' );
@@ -200,7 +200,7 @@ subtest 'exec option' => sub {
     `echo "#!/bin/sh\n\necho 'message2';\ntouch testfile2" > '$repo/test2/script2.sh'`;
     `chmod +x '$repo/test2/script2.sh'`;
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     like( $trap->stdout, qr/message1/,
         'output contains output from script1' );
@@ -220,7 +220,7 @@ subtest 'switch to skip' => sub {
     my ( $home, $repo, $origin );
     ( $home, $repo, $origin ) = minimum_home('switch_to_skip');
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     ok( -l "$home/bin", 'bin is symlinked' );
 
@@ -229,7 +229,7 @@ subtest 'switch to skip' => sub {
 
     trap {
         $ENV{HOME} = $home;
-        DFM::run_dfm( "$repo/bin", '--verbose' );
+        DFM::run_dfm( "$repo/bin", 'install', '--verbose' );
     };
 
     ok( !-e "$home/bin", 'bin directory is not symlinked' );
@@ -244,7 +244,7 @@ subtest 'spaces in username' => sub {
     `mkdir '$home/bin'`;
     `touch '$home/bin/old'`;
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     ok( -l "$home/bin",             'bin is symlinked' );
     ok( -e "$home/.backup/bin/old", 'old files are in backup' );
@@ -265,7 +265,7 @@ subtest 'chmod option' => sub {
     is( ( sprintf "%04o", S_IMODE( ( stat("$repo/.ssh/config") )[2] ) ),
         '0644', 'permissions before are correct' );
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     is( ( sprintf "%04o", S_IMODE( ( stat("$repo/.ssh/config") )[2] ) ),
         '0600', 'permissions after are correct' );
@@ -275,7 +275,7 @@ subtest 'chmod option' => sub {
 
         `echo "config chmod" > $repo/.ssh/.dfminstall`;
 
-        run_dfm( $home, $repo, '--verbose' );
+        run_dfm( $home, $repo, 'install', '--verbose' );
 
         like(
             $trap->stdout,
@@ -291,7 +291,7 @@ subtest 'chmod option' => sub {
 
         `echo "config chmod himom" > $repo/.ssh/.dfminstall`;
 
-        run_dfm( $home, $repo, '--verbose' );
+        run_dfm( $home, $repo, 'install', '--verbose' );
 
         like( $trap->stdout, qr/bad mode 'himom'/,
             'error message in output' );
@@ -309,7 +309,7 @@ subtest 'repo dir env override' => sub {
     local $ENV{'DFM_REPO'} = $repo;
 
     # simulate running dfm from the homedir instead of inside the repo
-    run_dfm( $home, $home, '--verbose' );
+    run_dfm( $home, $home, 'install', '--verbose' );
 
     ok( -d "$home/.backup",      'main backup dir exists' );
     ok( -l "$home/bin",          'bin is a symlink' );

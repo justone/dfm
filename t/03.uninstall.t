@@ -27,7 +27,7 @@ subtest 'uninstall dotfiles' => sub {
 
     my $output;
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     ok( -d "$home/.backup", 'main backup dir exists' );
     ok( -l "$home/bin",     'bin is a symlink' );
@@ -67,7 +67,7 @@ subtest 'uninstall dotfiles (dry-run)' => sub {
 
     my $output;
 
-    run_dfm( $home, $repo, '--verbose' );
+    run_dfm( $home, $repo, 'install', '--verbose' );
 
     ok( -d "$home/.backup", 'main backup dir exists' );
     ok( -l "$home/bin",     'bin is a symlink' );
@@ -79,7 +79,7 @@ SKIP: {
             "loader present in $profile_filename" );
     }
 
-    run_dfm( $home, $repo, '--verbose', '--dry-run', 'uninstall' );
+    run_dfm( $home, $repo, 'uninstall', '--dry-run', '--verbose' );
 
     ok( -l "$home/bin", 'bin is still a symlink' );
 
