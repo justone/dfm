@@ -828,6 +828,7 @@ sub show_usage {
 
 Usage:
     dfm install [--verbose|--quiet] [--dry-run]
+    dfm import [--verbose|--quiet] [--dry-run] [--no-commit] [--message <message>] file1 [file2 ..]
     dfm uninstall [--verbose|--quiet] [--dry-run]
     dfm updates [--verbose|--quiet] [--dry-run] [--no-fetch]
     dfm mergeandinstall [--verbose|--quiet] [--dry-run] [--merge|--rebase]
@@ -867,6 +868,8 @@ __END__
     dfm install [--verbose|--quiet] [--dry-run]
 
     dfm import [--verbose|--quiet] [--dry-run] [--no-commit] [--message <message>] file1 [file2 ..]
+     - or -
+    dfm im [--verbose|--quiet] [--dry-run] [--no-commit] [--message <message>] file1 [file2 ..]
 
     dfm uninstall [--verbose|--quiet] [--dry-run]
      - or -
