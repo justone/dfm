@@ -63,7 +63,7 @@ my $commands = {
         DEBUG("Running in [$RealBin] and installing in [$home]");
 
         # uninstall files
-        uninstall_files( $home . '/' . $repo_dir, $home );
+        uninstall_files( _abs_repo_path( $home, $repo_dir ), $home );
 
         # remove the bash loader
         unconfigure_bash_loader();
@@ -74,7 +74,7 @@ my $commands = {
         GetOptionsFromArray( $argv, \%opts, 'message=s', 'no-commit|n' );
 
         # import files
-        import_files( $home . '/' . $repo_dir, $home, $argv );
+        import_files( _abs_repo_path( $home, $repo_dir ), $home, $argv );
     },
     'help' => sub {
         my $argv = shift;
@@ -254,7 +254,7 @@ sub DEBUG {
 sub fetch_updates {
     my $opts = shift;
 
-    chdir( $home . '/' . $repo_dir );
+    chdir( _abs_repo_path( $home, $repo_dir ) );
 
     if ( !$opts->{'no-fetch'} ) {
         DEBUG('fetching changes');
@@ -270,7 +270,7 @@ sub fetch_updates {
 sub merge_and_install {
     my $opts = shift;
 
-    chdir( $home . '/' . $repo_dir );
+    chdir( _abs_repo_path( $home, $repo_dir ) );
 
     my $current_branch = get_current_branch();
     check_remote_branch($current_branch);
@@ -314,7 +314,7 @@ sub install {
 
     DEBUG("Running in [$RealBin] and installing in [$home]");
 
-    install_files( $home . '/' . $repo_dir, $home );
+    install_files( _abs_repo_path( $home, $repo_dir ), $home );
 
     # link in the bash loader
     if ( -e "$home/$repo_dir/.bashrc.load" ) {
@@ -401,7 +401,7 @@ sub install_files {
                 $recurse_options = {
                     install_only => [
                         map { s/^$recurse\///; $_ }
-                            grep {/^$recurse/} @$install_only
+                        grep {/^$recurse/} @$install_only
                     ]
                 };
             }
@@ -621,7 +621,7 @@ sub import_files {
         }
     }
 
-    install_files( $home . '/' . $repo_dir,
+    install_files( _abs_repo_path( $home, $repo_dir ),
         $home, { install_only => [@$files] } );
 
     INFO( "Committing with message '$message'"
@@ -708,10 +708,21 @@ sub _run_git {
     my $cwd_before_git = getcwd();
 
     DEBUG( 'running git ' . join( ' ', @args ) . " in $home/$repo_dir" );
-    chdir( $home . '/' . $repo_dir );
+    chdir( _abs_repo_path( $home, $repo_dir ) );
     system( 'git', @args );
 
     chdir($cwd_before_git);
+}
+
+sub _abs_repo_path {
+    my ( $home, $repo ) = @_;
+
+    if ( File::Spec->file_name_is_absolute($repo) ) {
+        return $repo;
+    }
+    else {
+        return $home . '/' . $repo;
+    }
 }
 
 # when symlinking from source_dir into target_dir, figure out if there's a

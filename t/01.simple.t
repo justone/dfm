@@ -321,6 +321,30 @@ subtest 'repo dir env override' => sub {
     ok( !-e "$home/t",         'no t dir in homedir' );
 };
 
+subtest 'repo dir env override not in home' => sub {
+    focus('repo_dir_override_not_in_home');
+
+    my ( $home, $repo, $origin );
+    ( $home, $repo, $origin ) = minimum_home('first');
+
+    diag("$repo");
+    `rm -rf $Bin/rep`;
+    `mv $repo $Bin/rep`;
+    local $ENV{'DFM_REPO'} = "$Bin/rep";
+
+    # simulate running dfm from the homedir instead of inside the repo
+    run_dfm( $home, $home, 'install', '--verbose' );
+
+    ok( -d "$home/.backup",      'main backup dir exists' );
+    ok( -l "$home/bin",          'bin is a symlink' );
+    ok( !-e "$home/.git",        ".git does not exist in \$home" );
+    ok( !-e "$home/.gitignore",  '.gitignore does not exist' );
+    ok( !-e "$home/.dfminstall", '.dfminstall does not exist' );
+    is( readlink("$home/bin"), '../rep/bin', 'bin points into repo' );
+    ok( !-e "$home/README.md", 'no README.md in homedir' );
+    ok( !-e "$home/t",         'no t dir in homedir' );
+};
+
 subtest 'command first' => sub {
     focus('command_first');
 

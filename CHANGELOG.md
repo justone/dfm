@@ -1,5 +1,6 @@
 # v0.7 (unreleased)
 
+* dotfiles repository can now be outside of home directory, using $DFM_REPO
 * add help subcommand and refactor help handling
 * make 'help' the default subcommand (seth--)
 * better parsing of arguments to preserve all arguments passed through to git subcommands
