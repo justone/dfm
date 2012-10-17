@@ -317,7 +317,7 @@ sub install {
     install_files( _abs_repo_path( $home, $repo_dir ), $home );
 
     # link in the bash loader
-    if ( -e "$home/$repo_dir/.bashrc.load" ) {
+    if ( -e _abs_repo_path( $home, $repo_dir ) . "/.bashrc.load" ) {
         configure_bash_loader();
     }
 }

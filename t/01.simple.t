@@ -326,6 +326,7 @@ subtest 'repo dir env override not in home' => sub {
 
     my ( $home, $repo, $origin );
     ( $home, $repo, $origin ) = minimum_home('first');
+    `touch $repo/.bashrc.load`;    # make sure there's a loader
 
     diag("$repo");
     `rm -rf $Bin/rep`;
@@ -343,6 +344,14 @@ subtest 'repo dir env override not in home' => sub {
     is( readlink("$home/bin"), '../rep/bin', 'bin points into repo' );
     ok( !-e "$home/README.md", 'no README.md in homedir' );
     ok( !-e "$home/t",         'no t dir in homedir' );
+
+SKIP: {
+        skip 'File::Slurp not found', 1 unless $file_slurp_available;
+
+        ok( read_file("$home/$profile_filename") =~ /bashrc.load/,
+            "loader present in $profile_filename" );
+    }
+
 };
 
 subtest 'command first' => sub {
