@@ -27,7 +27,10 @@ my $command_aliases = {
 
 my $commands = {
     'install' => sub {
+        my $argv = shift;
         DEBUG("Running in [$RealBin] and installing in [$home]");
+
+        GetOptionsFromArray( $argv, \%opts, 'profile|p=s', 'only|o=s', 'except|e=s' );
 
         # install files
         install( $home, $repo_dir );
@@ -75,6 +78,38 @@ my $commands = {
 
         # import files
         import_files( _abs_repo_path( $home, $repo_dir ), $home, $argv );
+    },
+    'profile' => sub {
+        my $argv = shift;
+
+        GetOptionsFromArray( $argv, \%opts, 'name|n=s', 'only|o=s', 'except|e=s' );
+        
+        my $name = $opts{'name'};
+
+        if (!$name) {
+            ERROR('Missing profile name');
+            exit 1;
+        }
+
+        my $subcommand = shift @$argv;
+        if ($subcommand eq 'add') {
+
+            if (my $only = $opts{only}) {
+                add_profile($name, 'include', $only);
+            }
+            elsif (my $except = $opts{except}) {
+                add_profile($name, 'exclude', $except);
+            }
+            else {
+                ERROR('Need to specify either a list of files to include or exclude');
+                exit 1;
+            }
+        }
+        elsif ($subcommand eq 'remove') {
+            
+            remove_profile($name);
+        }
+
     },
     'help' => sub {
         my $argv = shift;
@@ -309,17 +344,100 @@ sub merge_and_install {
 sub install {
     my ( $home, $repo_dir ) = @_;
 
+    my $install_options = {};
+
+    if ($opts{'only'}) {
+        # TODO: set up adhoc profile
+        $install_options->{install_only} = [split(/,/, $opts{'only'})];
+    }
+    elsif ($opts{'except'}) {
+        # TODO: set up adhoc profile
+        $install_options->{install_except} = [split(/,/, $opts{'except'})];
+    }
+    elsif ($opts{'profile'}) {
+        my $profile = load_profile($opts{'profile'});
+        if ($profile->{type} eq 'include') {
+            $install_options->{install_only} = $profile->{files};
+        }
+        elsif ($profile->{type} eq 'exclude') {
+            $install_options->{install_except} = $profile->{files};
+        }
+        # TODO: save the profile name as the one currently installed
+    }
+
     INFO(
         "Installing dotfiles..." . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
 
     DEBUG("Running in [$RealBin] and installing in [$home]");
 
-    install_files( _abs_repo_path( $home, $repo_dir ), $home );
+    install_files( _abs_repo_path( $home, $repo_dir ), $home, $install_options );
 
     # link in the bash loader
     if ( -e _abs_repo_path( $home, $repo_dir ) . "/.bashrc.load" ) {
         configure_bash_loader();
     }
+}
+
+sub load_profile {
+    my ( $name ) = @_;
+
+    my $profile_config = _abs_repo_path( $home, $repo_dir ) . "/.dfm_profiles";
+
+    my $type = get_config($profile_config, "${name}.type");
+    my $files = get_config($profile_config, "${name}.files");
+    if (!$type) {
+        ERROR("No profile $name found.");
+        exit 1;
+    }
+
+    return {
+        type => $type,
+        files => [split(/,/, $files)],
+    }
+}
+
+sub remove_profile {
+    my ( $name ) = @_;
+
+    my $profile_config = _abs_repo_path( $home, $repo_dir ) . "/.dfm_profiles";
+
+    remove_config($profile_config, $name);
+
+    INFO("Removed profile $name.");
+}
+
+sub add_profile {
+    my ( $name, $type, $files ) = @_;
+
+    # TODO: check for an existing profile
+
+    my $profile_config = _abs_repo_path( $home, $repo_dir ) . "/.dfm_profiles";
+
+    set_config($profile_config, "${name}.type", $type);
+    set_config($profile_config, "${name}.files", $files);
+
+    INFO("Added profile $name.");
+}
+
+sub get_config {
+    my ( $path, $key ) = @_;
+
+    my $value = `git config --file $path $key`;
+    chomp($value);
+
+    return $value;
+}
+
+sub set_config {
+    my ( $path, $key, $value ) = @_;
+
+    `git config --file $path $key "$value"`;
+}
+
+sub remove_config {
+    my ( $path, $section ) = @_;
+
+    `git config --file $path --remove-section $section`;
 }
 
 # function to install files
@@ -330,10 +448,16 @@ sub install_files {
 
     my $install_only;
 
-    if ( $options->{install_only}
-        && scalar @{ $options->{install_only} } > 0 )
+    if ( $options->{install_only} )
     {
         $install_only = $options->{install_only};
+    }
+
+    my $install_except;
+
+    if ( $options->{install_except} )
+    {
+        $install_except = $options->{install_except};
     }
 
     DEBUG("Installing from $source_dir into $target_dir");
@@ -359,6 +483,9 @@ sub install_files {
 
         if ($install_only) {
             next unless grep { $_ eq $direntry } @$install_only;
+        }
+        elsif ($install_except) {
+            next if grep { $_ eq $direntry } @$install_except;
         }
 
         # skip vim swap files
@@ -402,6 +529,14 @@ sub install_files {
                     install_only => [
                         map { s/^$recurse\///; $_ }
                         grep {/^$recurse/} @$install_only
+                    ]
+                };
+            }
+            elsif ($install_except) {
+                $recurse_options = {
+                    install_except => [
+                        map { s/^$recurse\///; $_ }
+                        grep {/^$recurse/} @$install_except
                     ]
                 };
             }
@@ -621,6 +756,7 @@ sub import_files {
         }
     }
 
+    # TODO handle profile implications
     install_files( _abs_repo_path( $home, $repo_dir ),
         $home, { install_only => [@$files] } );
 
@@ -940,7 +1076,7 @@ This shows the help for a particular subcommand.
 
 All Options:
 
-  dfm install [--verbose|--quiet] [--dry-run]
+  dfm install [--verbose|--quiet] [--dry-run] [-p|--profile <profile>] [-o|--only <file>] [-e|--except <file>]
 
 Examples:
 
