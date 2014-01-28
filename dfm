@@ -30,7 +30,7 @@ my $commands = {
         my $argv = shift;
         DEBUG("Running in [$RealBin] and installing in [$home]");
 
-        GetOptionsFromArray( $argv, \%opts, 'profile|p=s', 'only|o=s', 'except|e=s' );
+        GetOptionsFromArray( $argv, \%opts, 'profile|p=s', 'include|i=s', 'exclude|e=s' );
 
         # install files
         install( $home, $repo_dir );
@@ -82,31 +82,20 @@ my $commands = {
     'profile' => sub {
         my $argv = shift;
 
-        GetOptionsFromArray( $argv, \%opts, 'name|n=s', 'only|o=s', 'except|e=s' );
-        
+        GetOptionsFromArray( $argv, \%opts, 'name|n=s', 'include|o=s', 'exclude|e=s', 'map|m=s' );
+
         my $name = $opts{'name'};
 
-        if (!$name) {
+        if ( !$name ) {
             ERROR('Missing profile name');
             exit 1;
         }
 
         my $subcommand = shift @$argv;
-        if ($subcommand eq 'add') {
-
-            if (my $only = $opts{only}) {
-                add_profile($name, 'include', $only);
-            }
-            elsif (my $except = $opts{except}) {
-                add_profile($name, 'exclude', $except);
-            }
-            else {
-                ERROR('Need to specify either a list of files to include or exclude');
-                exit 1;
-            }
+        if ( $subcommand eq 'add' ) {
+            add_profile( $name, \%opts );
         }
-        elsif ($subcommand eq 'remove') {
-            
+        elsif ( $subcommand eq 'remove' ) {
             remove_profile($name);
         }
 
@@ -346,22 +335,22 @@ sub install {
 
     my $install_options = {};
 
-    if ($opts{'only'}) {
+    if ( $opts{'include'} ) {
+
         # TODO: set up adhoc profile
-        $install_options->{install_only} = [split(/,/, $opts{'only'})];
+        $install_options->{install_include}
+            = [ split( /,/, $opts{'include'} ) ];
     }
-    elsif ($opts{'except'}) {
+    elsif ( $opts{'exclude'} ) {
+
         # TODO: set up adhoc profile
-        $install_options->{install_except} = [split(/,/, $opts{'except'})];
+        $install_options->{install_exclude}
+            = [ split( /,/, $opts{'exclude'} ) ];
     }
-    elsif ($opts{'profile'}) {
-        my $profile = load_profile($opts{'profile'});
-        if ($profile->{type} eq 'include') {
-            $install_options->{install_only} = $profile->{files};
-        }
-        elsif ($profile->{type} eq 'exclude') {
-            $install_options->{install_except} = $profile->{files};
-        }
+    elsif ( $opts{'profile'} ) {
+
+        $install_options = load_profile( $opts{'profile'} );
+
         # TODO: save the profile name as the one currently installed
     }
 
@@ -379,42 +368,67 @@ sub install {
 }
 
 sub load_profile {
-    my ( $name ) = @_;
+    my ($name) = @_;
 
     my $profile_config = _abs_repo_path( $home, $repo_dir ) . "/.dfm_profiles";
 
-    my $type = get_config($profile_config, "${name}.type");
-    my $files = get_config($profile_config, "${name}.files");
-    if (!$type) {
+    my $profile = {};
+    foreach my $type (qw(include exclude map)) {
+        if ( my $files = get_config( $profile_config, "${name}.${type}" ) ) {
+            $profile->{"install_$type"} = [ split( /,/, $files ) ]
+        }
+    }
+
+    if ( $profile->{"install_map"} ) {
+        $profile->{"install_map"} = { map { split( /=/, $_ ) } @{ $profile->{"install_map"} } };
+    }
+
+    if ( scalar keys %$profile == 0 ) {
         ERROR("No profile $name found.");
         exit 1;
     }
 
-    return {
-        type => $type,
-        files => [split(/,/, $files)],
-    }
+    return $profile;
 }
 
 sub remove_profile {
-    my ( $name ) = @_;
+    my ($name) = @_;
 
     my $profile_config = _abs_repo_path( $home, $repo_dir ) . "/.dfm_profiles";
 
-    remove_config($profile_config, $name);
+    remove_config( $profile_config, $name );
 
     INFO("Removed profile $name.");
 }
 
 sub add_profile {
-    my ( $name, $type, $files ) = @_;
+    my ( $name, $opts ) = @_;
 
     # TODO: check for an existing profile
+    my $profile_info = {};
+
+    foreach my $type (qw(include exclude map)) {
+        if ( my $files = $opts{$type} ) {
+            $profile_info->{$type} = $files;
+        }
+    }
+
+    if ( scalar keys %$profile_info == 0 ) {
+        ERROR('Need to specify either a list of files to include or exclude or map.');
+        exit 1;
+    }
+    if ( $profile_info->{include} && $profile_info->{exclude} ) {
+        ERROR('Include and exclude cannot both be specified.');
+        exit 1;
+    }
 
     my $profile_config = _abs_repo_path( $home, $repo_dir ) . "/.dfm_profiles";
 
-    set_config($profile_config, "${name}.type", $type);
-    set_config($profile_config, "${name}.files", $files);
+    foreach my $type (qw(include exclude map)) {
+        if ( my $files = $profile_info->{$type} ) {
+            set_config( $profile_config, "${name}.${type}", $files );
+        }
+    }
 
     INFO("Added profile $name.");
 }
@@ -442,23 +456,13 @@ sub remove_config {
 
 # function to install files
 # possible options:
-#   install_only: list of files to install, as opposed to all of them
+#   install_include: list of files to install, as opposed to all of them
 sub install_files {
     my ( $source_dir, $target_dir, $options ) = @_;
 
-    my $install_only;
-
-    if ( $options->{install_only} )
-    {
-        $install_only = $options->{install_only};
-    }
-
-    my $install_except;
-
-    if ( $options->{install_except} )
-    {
-        $install_except = $options->{install_except};
-    }
+    my $install_include = $options->{install_include};
+    my $install_exclude = $options->{install_exclude};
+    my $install_map     = $options->{install_map};
 
     DEBUG("Installing from $source_dir into $target_dir");
 
@@ -481,13 +485,6 @@ sub install_files {
     opendir $dirh, $source_dir;
     foreach my $direntry ( readdir($dirh) ) {
 
-        if ($install_only) {
-            next unless grep { $_ eq $direntry } @$install_only;
-        }
-        elsif ($install_except) {
-            next if grep { $_ eq $direntry } @$install_except;
-        }
-
         # skip vim swap files
         next if $direntry =~ /.*\.sw.$/;
 
@@ -496,20 +493,33 @@ sub install_files {
 
         DEBUG(" Working on $direntry");
 
-        if ( !-l $direntry ) {
-            if ( -e $direntry ) {
-                INFO("  Backing up $direntry.");
-                system("mv '$direntry' '$backup_dir/$direntry'")
+        my $target = $direntry;
+
+        if ( $install_map && $install_map->{$direntry} ) {
+            $target = $install_map->{$direntry};
+        }
+        else {
+            if ($install_include) {
+                next unless grep { $_ eq $direntry } @$install_include;
+            }
+            if ($install_exclude) {
+                next if grep { $_ eq $direntry } @$install_exclude;
+            }
+        }
+
+        if ( !-l $target ) {
+            if ( -e $target ) {
+                INFO("  Backing up $target.");
+                system("mv '$target' '$backup_dir/$target'")
                     if !$opts{'dry-run'};
             }
-            INFO("  Symlinking $direntry ($symlink_base/$direntry).");
-            symlink( "$symlink_base/$direntry", "$direntry" )
+            INFO("  Symlinking $target ($symlink_base/$direntry).");
+            symlink( "$symlink_base/$direntry", "$target" )
                 if !$opts{'dry-run'};
         }
     }
 
-    cleanup_dangling_symlinks( $source_dir, $target_dir,
-        $dfm_install->{skip_files} );
+    cleanup_dangling_symlinks( $source_dir, $target_dir, $dfm_install->{skip_files} );
 
     foreach my $recurse ( @{ $dfm_install->{recurse_files} } ) {
         if ( -d "$source_dir/$recurse" ) {
@@ -524,22 +534,24 @@ sub install_files {
             }
 
             my $recurse_options;
-            if ($install_only) {
+            if ($install_include) {
                 $recurse_options = {
-                    install_only => [
+                    install_include => [
                         map { s/^$recurse\///; $_ }
-                        grep {/^$recurse/} @$install_only
+                        grep {/^$recurse/} @$install_include
                     ]
                 };
             }
-            elsif ($install_except) {
+            elsif ($install_exclude) {
                 $recurse_options = {
-                    install_except => [
+                    install_exclude => [
                         map { s/^$recurse\///; $_ }
-                        grep {/^$recurse/} @$install_except
+                        grep {/^$recurse/} @$install_exclude
                     ]
                 };
             }
+
+            # TODO: add install_map munging
             install_files( "$source_dir/$recurse", "$target_dir/$recurse",
                 $recurse_options );
         }
@@ -1076,7 +1088,7 @@ This shows the help for a particular subcommand.
 
 All Options:
 
-  dfm install [--verbose|--quiet] [--dry-run] [-p|--profile <profile>] [-o|--only <file>] [-e|--except <file>]
+  dfm install [--verbose|--quiet] [--dry-run] [-p|--profile <profile>] [-i|--include <file>] [-e|--exclude <file>] [-m|--map <filemap>]
 
 Examples:
 
