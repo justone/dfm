@@ -82,9 +82,9 @@ my $commands = {
     'profile' => sub {
         my $argv = shift;
 
-        GetOptionsFromArray( $argv, \%opts, 'name|n=s', 'include|o=s', 'exclude|e=s', 'map|m=s' );
+        GetOptionsFromArray( $argv, \%opts, 'include|o=s', 'exclude|e=s', 'map|m=s' );
 
-        my $name = $opts{'name'};
+        my $name = shift @$argv;
 
         if ( !$name ) {
             ERROR('Missing profile name');
@@ -107,6 +107,7 @@ my $commands = {
 
         if ($command) {
             $command = $command_aliases->{$command} || $command;
+            print "$command\n";
 
             my %options = (
                 -verbose    => 99,
@@ -1046,6 +1047,7 @@ The commands are:
    updates    Fetch updates but don't merge them in
    mi         Merge in updates and install dotfiles again
    umi        Fetch updates, merge in and install
+   profile    Manage profiles
 
 See 'dfm help <command>' for more information on a specific command.
 
@@ -1137,7 +1139,7 @@ All Options:
    - or -
   dfm im [--verbose|--quiet] [--dry-run] [--no-commit] [--message <message>] file1 [file2 ..]
 
-=head2 Examples
+Examples:
 
   dfm import ~/.vimrc
   dfm import .tmux.conf --message 'adding my tmux config'
@@ -1185,6 +1187,29 @@ Examples:
 Description:
 
 This merges or rebases the upstream changes in and re-installs dotfiiles.
+
+=head1 PROFILE
+
+All Options:
+
+  dfm profile add <name> [-i|--include <files>] [-e|--exclude <files>] [-m|--map <filemap>]
+  dfm profile remove <name>
+
+Examples:
+
+  dfm profile add vimonly -i .vimrc,.vim
+  dfm profile add noinputrc -e .inputrc
+  dfm profile remove vimonly
+
+Description:
+
+This command manages install profiles.
+
+=head1 dfm [git subcommand] [git options]
+
+This runs any git command as if it was inside the dotfiles repository.  For
+instance, this makes it easy to commit changes that are made by running 'dfm
+commit'.
 
 =head1 UPDATEMERGEANDINSTALL
 
