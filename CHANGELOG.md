@@ -1,4 +1,4 @@
-# v0.7 (unreleased)
+# v0.7 2014-02-13
 
 * dotfiles repository can now be outside of home directory, using $DFM_REPO
 * add help subcommand and refactor help handling
