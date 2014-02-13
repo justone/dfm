@@ -58,8 +58,7 @@ my $commands = {
     'uninstall' => sub {
         my $argv = shift;
 
-        INFO( "Uninstalling dotfiles..."
-                . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
+        INFO( "Uninstalling dotfiles..." . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
 
         DEBUG("Running in [$RealBin] and installing in [$home]");
 
@@ -118,7 +117,7 @@ sub run_dfm {
 
     if ( scalar(@argv) == 0 || $argv[0] =~ /^-/ ) {
 
-       # check to make sure there's not a dfm subcommand later in the arg list
+        # check to make sure there's not a dfm subcommand later in the arg list
         if ( grep { exists $commands->{$_} } @argv ) {
             ERROR("The command should be first.");
             exit(-2);
@@ -135,10 +134,7 @@ sub run_dfm {
 
         # parse global options first
         Getopt::Long::Configure('pass_through');
-        GetOptionsFromArray(
-            \@argv,    \%opts, 'verbose', 'quiet',
-            'dry-run', 'help', 'version'
-        );
+        GetOptionsFromArray( \@argv, \%opts, 'verbose', 'quiet', 'dry-run', 'help', 'version' );
         Getopt::Long::Configure('no_pass_through');
     }
 
@@ -165,9 +161,7 @@ sub run_dfm {
         }
 
         if ( !$repo_dir ) {
-            ERROR(
-                "unable to discover dotfiles repo and dfm is running from its own repo"
-            );
+            ERROR( "unable to discover dotfiles repo and dfm is running from its own repo" );
             exit(-2);
         }
     }
@@ -281,15 +275,11 @@ sub merge_and_install {
     if ( get_changes("$current_branch..$current_branch\@{u}") ) {
 
         # check for local commits
-        if ( my $local_changes
-            = get_changes("$current_branch\@{u}..$current_branch") )
-        {
+        if ( my $local_changes = get_changes("$current_branch\@{u}..$current_branch") ) {
 
             # if a decision wasn't made about how to deal with local commits
             if ( !$opts->{'merge'} && !$opts->{'rebase'} ) {
-                WARN(
-                    "local changes detected, run with either --merge or --rebase"
-                );
+                WARN( "local changes detected, run with either --merge or --rebase" );
                 print $local_changes, "\n";
                 exit;
             }
@@ -310,8 +300,7 @@ sub merge_and_install {
 sub install {
     my ( $home, $repo_dir ) = @_;
 
-    INFO(
-        "Installing dotfiles..." . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
+    INFO( "Installing dotfiles..." . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
 
     DEBUG("Running in [$RealBin] and installing in [$home]");
 
@@ -382,8 +371,7 @@ sub install_files {
         }
     }
 
-    cleanup_dangling_symlinks( $source_dir, $target_dir,
-        $dfm_install->{skip_files} );
+    cleanup_dangling_symlinks( $source_dir, $target_dir, $dfm_install->{skip_files} );
 
     foreach my $recurse ( @{ $dfm_install->{recurse_files} } ) {
         if ( -d "$source_dir/$recurse" ) {
@@ -406,13 +394,10 @@ sub install_files {
                     ]
                 };
             }
-            install_files( "$source_dir/$recurse", "$target_dir/$recurse",
-                $recurse_options );
+            install_files( "$source_dir/$recurse", "$target_dir/$recurse", $recurse_options );
         }
         else {
-            WARN(
-                "couldn't recurse into $source_dir/$recurse, not a directory"
-            );
+            WARN( "couldn't recurse into $source_dir/$recurse, not a directory" );
         }
     }
 
@@ -481,8 +466,8 @@ sub uninstall_files {
             my ( $volume, @elements ) = File::Spec->splitpath($link_target);
             my $element = pop @elements;
 
-            my $target_base = realpath(
-                File::Spec->rel2abs( File::Spec->catpath( '', @elements ) ) );
+            my $target_base
+                = realpath( File::Spec->rel2abs( File::Spec->catpath( '', @elements ) ) );
 
             DEBUG("target_base $target_base $source_dir");
             if ( $target_base eq $source_dir ) {
@@ -504,9 +489,7 @@ sub uninstall_files {
             uninstall_files( "$source_dir/$recurse", "$target_dir/$recurse" );
         }
         else {
-            WARN(
-                "couldn't recurse into $target_dir/$recurse, not a directory"
-            );
+            WARN( "couldn't recurse into $target_dir/$recurse, not a directory" );
         }
     }
 }
@@ -516,8 +499,7 @@ sub relative_to_target {
 
     if ( -l $tryfile ) {
         my ( $volume, $dirs, $lfile ) = File::Spec->splitpath($tryfile);
-        return File::Spec->abs2rel(
-            File::Spec->catfile( realpath($dirs), $lfile ), $target_dir );
+        return File::Spec->abs2rel( File::Spec->catfile( realpath($dirs), $lfile ), $target_dir );
     }
     else {
         return File::Spec->abs2rel( realpath($tryfile), $target_dir );
@@ -572,8 +554,7 @@ sub import_files {
         DEBUG("file path, relative to homedir: $file");
 
         my ( $in_a_subdir, $subdir )
-            = _file_in_tracked_or_untracked( $source_dir, $source_dir,
-            $file );
+            = _file_in_tracked_or_untracked( $source_dir, $source_dir, $file );
         if ( $in_a_subdir eq 'untracked' ) {
             ERROR(
                 "file $file is in a subdirectory that is not tracked, consider using 'dfm import $subdir'."
@@ -594,8 +575,7 @@ sub import_files {
         # detect file that's already tracked, either by being a symlink that
         # points into the repo or in the repo itself
         if ((   -l "$target_dir/$file"
-                && (readlink("$target_dir/$file")
-                    =~ /(\.\.\/)*$symlink_base/ )
+                && ( readlink("$target_dir/$file") =~ /(\.\.\/)*$symlink_base/ )
             )
             || $file =~ /^$symlink_base/
             )
@@ -622,11 +602,9 @@ sub import_files {
         }
     }
 
-    install_files( _abs_repo_path( $home, $repo_dir ),
-        $home, { install_only => [@$files] } );
+    install_files( _abs_repo_path( $home, $repo_dir ), $home, { install_only => [@$files] } );
 
-    INFO( "Committing with message '$message'"
-            . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
+    INFO( "Committing with message '$message'" . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
     if ( !$opts{'dry-run'} ) {
         if ( !$opts{'no-commit'} ) {
             _run_git( 'commit', @$files, '-m', $message );
@@ -653,14 +631,12 @@ sub cleanup_dangling_symlinks {
             my ( $volume, @elements ) = File::Spec->splitpath($link_target);
             my $element = pop @elements;
 
-            my $target_base = realpath(
-                File::Spec->rel2abs( File::Spec->catpath( '', @elements ) ) );
+            my $target_base
+                = realpath( File::Spec->rel2abs( File::Spec->catpath( '', @elements ) ) );
 
             DEBUG("target_base $target_base $source_dir");
             if ( $target_base eq $source_dir ) {
-                INFO(
-                    "  Cleaning up dangling symlink $direntry ($link_target)."
-                );
+                INFO( "  Cleaning up dangling symlink $direntry ($link_target)." );
                 unlink($direntry) if !$opts{'dry-run'};
             }
         }
@@ -734,9 +710,7 @@ sub _calculate_symlink_base {
     my $symlink_base;
 
     # if the paths have no first element in common
-    if ( ( File::Spec->splitdir($source_dir) )[1] ne
-        ( File::Spec->splitdir($target_dir) )[1] )
-    {
+    if ( ( File::Spec->splitdir($source_dir) )[1] ne ( File::Spec->splitdir($target_dir) )[1] ) {
         $symlink_base = $source_dir;    # use absolute path
     }
     else {
@@ -768,8 +742,7 @@ sub _file_in_tracked_or_untracked {
     my @dirs = File::Spec->splitdir($file);
     if ( scalar(@dirs) > 1 ) {
         my $recurse_dir = shift(@dirs);
-        if ( grep { $recurse_dir eq $_ } @{ $dfm_install->{recurse_files} } )
-        {
+        if ( grep { $recurse_dir eq $_ } @{ $dfm_install->{recurse_files} } ) {
             chdir($cwd_before_inspection);
             return _file_in_tracked_or_untracked(
                 $orig_source_dir,
@@ -778,8 +751,7 @@ sub _file_in_tracked_or_untracked {
             );
         }
         else {
-            my $relative_path
-                = File::Spec->abs2rel( $source_dir, $orig_source_dir );
+            my $relative_path = File::Spec->abs2rel( $source_dir, $orig_source_dir );
 
             my $dir_type = -e $recurse_dir ? 'tracked' : 'untracked';
 
@@ -837,9 +809,7 @@ sub _load_dfminstall {
                 }
                 elsif ( $options[0] eq 'chmod' ) {
                     if ( !$options[1] ) {
-                        ERROR(
-                            "chmod option requires a mode (e.g. 0600) in $dfminstall_path"
-                        );
+                        ERROR( "chmod option requires a mode (e.g. 0600) in $dfminstall_path" );
                         exit 1;
                     }
                     if ( $options[1] !~ /^[0-7]{4}$/ ) {
@@ -856,8 +826,7 @@ sub _load_dfminstall {
         close($skip_fh);
         $dfminstall_info->{skip_files}->{skip} = 1;
 
-        DEBUG("Skipped file: $_")
-            for keys %{ $dfminstall_info->{skip_files} };
+        DEBUG("Skipped file: $_") for keys %{ $dfminstall_info->{skip_files} };
     }
 
     return $dfminstall_info;
