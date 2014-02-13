@@ -22,7 +22,8 @@ my $command_aliases = {
     'mi'  => 'mergeandinstall',
     'umi' => 'updatemergeandinstall',
     'un'  => 'uninstall',
-    'im'  => 'import'
+    'im'  => 'import',
+    'in'  => 'install'
 };
 
 my $commands = {
@@ -989,7 +990,7 @@ All Options:
    - or -
   dfm im [--verbose|--quiet] [--dry-run] [--no-commit] [--message <message>] file1 [file2 ..]
 
-=head2 Examples
+Examples
 
   dfm import ~/.vimrc
   dfm import .tmux.conf --message 'adding my tmux config'
