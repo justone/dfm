@@ -1,5 +1,8 @@
 script: "prove -v t"
-install: "/bin/true"
+install:
+ - "cpanm Test::Trap --notest"
+ - "git config --global user.email 'test@test.com'"
+ - "git config --global user.name 'Test User'"
 language: perl
 perl:
   - "5.10"
