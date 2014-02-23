@@ -48,7 +48,9 @@
       },
       "test" : {
          "requires" : {
-            "Test::More" : "0.98"
+            "File::Slurp" : "0",
+            "Test::More" : "0.98",
+            "Test::Trap" : "0"
          }
       }
    },
