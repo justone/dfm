@@ -1,5 +1,5 @@
 {
-   "abstract" : "It's new $module",
+   "abstract" : "a utility to manage dotfiles",
    "author" : [
       "Nate Jones <nate@endot.org>"
    ],

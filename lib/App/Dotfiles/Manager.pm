@@ -14,15 +14,33 @@ __END__
 
 =head1 NAME
 
-App::Dotfiles::Manager - It's new $module
+dfm - a utility to manage dotfiles
 
 =head1 SYNOPSIS
 
-    use App::Dotfiles::Manager;
+dfm is a small utility that manages dotfiles.  It:
+
+=over 4
+
+=item * makes it easy to install (and uninstall) your dotfiles on new servers
+
+=item * easys fetching and merging changes that were pushed from other machines
+
+=item * simplifies working with your dotfiles repository, no matter where your current directory is
+
+=back
 
 =head1 DESCRIPTION
 
-App::Dotfiles::Manager is ...
+dfm works best when it's included in your dotfiles repository.  If you don't
+have a dotfiles repository already, you can use
+L<this starter repository|https://github.com/justone/dotfiles>.
+
+=head1 SEE ALSO
+
+For more information, check out the L<wiki|http://github.com/justone/dotfiles/wiki>.
+
+You can also run C<dfm --help>.
 
 =head1 LICENSE
 
@@ -36,4 +54,3 @@ it under the same terms as Perl itself.
 Nate Jones E<lt>nate@endot.orgE<gt>
 
 =cut
-

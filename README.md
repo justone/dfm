@@ -1,26 +1,26 @@
-[![Build Status](https://secure.travis-ci.org/justone/dfm.png?branch=master)](http://travis-ci.org/justone/dfm/)
+# NAME
 
-# dfm - a utility to manage dotfiles
+dfm - a utility to manage dotfiles
 
-## Overview
+# SYNOPSIS
 
 dfm is a small utility that manages dotfiles.  It:
 
-* makes it easy to install (and uninstall) your dotfiles on new servers
-* easys fetching and merging changes that were pushed from other machines
-* simplifies working with your dotfiles repository, no matter where your current directory is
+- makes it easy to install (and uninstall) your dotfiles on new servers
+- easys fetching and merging changes that were pushed from other machines
+- simplifies working with your dotfiles repository, no matter where your current directory is
 
-## Using dfm
+# DESCRIPTION
 
 dfm works best when it's included in your dotfiles repository.  If you don't
-have a dotfiles repository already, you can use [this starter
-repository](https://github.com/justone/dotfiles).
+have a dotfiles repository already, you can use
+[this starter repository](https://github.com/justone/dotfiles).
 
-## Full documentation
+# SEE ALSO
 
 For more information, check out the [wiki](http://github.com/justone/dotfiles/wiki).
 
-You can also run <tt>dfm \--help</tt>.
+You can also run `dfm --help`.
 
 # LICENSE
 
