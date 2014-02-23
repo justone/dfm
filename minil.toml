@@ -3,3 +3,4 @@
 
 name="App-Dotfiles-Manager"
 script_files = ['dfm']
+badges = ['travis']
