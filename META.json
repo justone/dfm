@@ -4,7 +4,7 @@
       "Nate Jones <nate@endot.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v0.6.5, CPAN::Meta::Converter version 2.132510",
+   "generated_by" : "Minilla/v0.11.0, CPAN::Meta::Converter version 2.132510",
    "license" : [
       "perl_5"
    ],
@@ -21,7 +21,8 @@
          "share",
          "eg",
          "examples",
-         "author"
+         "author",
+         "builder"
       ]
    },
    "prereqs" : {
