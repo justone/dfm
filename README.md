@@ -21,3 +21,14 @@ repository](https://github.com/justone/dotfiles).
 For more information, check out the [wiki](http://github.com/justone/dotfiles/wiki).
 
 You can also run <tt>dfm \--help</tt>.
+
+# LICENSE
+
+Copyright (C) Nate Jones.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+# AUTHOR
+
+Nate Jones <nate@endot.org>
