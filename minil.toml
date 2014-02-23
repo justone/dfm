@@ -1,0 +1,4 @@
+# Minilla configuration
+# https://metacpan.org/release/Minilla
+
+script_files = ['dfm']
