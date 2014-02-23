@@ -1,4 +1,4 @@
-script: "prove -v t"
+script: "perl Build.PL && ./Build test"
 install:
  - "cpanm Test::Trap --notest"
  - "git config --global user.email 'test@test.com'"
