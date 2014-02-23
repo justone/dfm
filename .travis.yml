@@ -1,4 +1,4 @@
-script: "perl Build.PL && ./Build test"
+script: "perl Build.PL && ./Build test --verbose"
 install:
  - "cpanm Test::Trap --notest"
  - "git config --global user.email 'test@test.com'"
