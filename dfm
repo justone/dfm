@@ -11,7 +11,7 @@ use File::Spec;
 use File::Copy;
 use Pod::Usage;
 
-our $VERSION = '0.7';
+our $VERSION = 'v0.7.1';
 
 my %opts;
 my $profile_filename;
