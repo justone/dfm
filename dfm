@@ -198,6 +198,30 @@ sub run_dfm {
     }
 }
 
+sub my_symlink {
+    my $target = shift;
+    my $link   = shift;
+        
+    if ($^O eq "cygwin")
+    {           
+        my $flags = "";
+        if (-d $target) { $flags = "/D" };
+
+        $target = `cygpath -w $target`;
+        $link   = `cygpath -w $link`;
+        
+        chomp $target;
+        chomp $link;
+
+        my $command = "cmd /c mklink $flags \"$link\" \"$target\"";
+        system($command);
+    }
+    else
+    {
+        symlink($target,$link);
+    }
+}
+
 sub get_changes {
     my $what = shift;
 
@@ -366,7 +390,7 @@ sub install_files {
                     if !$opts{'dry-run'};
             }
             INFO("  Symlinking $direntry ($symlink_base/$direntry).");
-            symlink( "$symlink_base/$direntry", "$direntry" )
+            my_symlink( "$symlink_base/$direntry", "$direntry" )
                 if !$opts{'dry-run'};
         }
     }
