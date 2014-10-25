@@ -95,20 +95,12 @@ subtest 'modifications in two repos, rebase' => sub {
     ok( !-e "$repo2/.testfile", 'updated file is not there' );
 
     run_dfm( $home2, $repo2, 'mi' );
-    like(
-        $trap->stdout,
-        qr/local changes detected/,
-        'conflict message in output'
-    );
+    like( $trap->stdout, qr/local changes detected/, 'conflict message in output' );
     ok( !-e "$repo2/.testfile", 'updated file is still not there' );
 
     run_dfm( $home2, $repo2, 'mi', '--rebase' );
 
-    like(
-        $trap->stdout,
-        qr/rewinding head to replay/,
-        'git rebase info message seen'
-    );
+    like( $trap->stdout, qr/rewinding head to replay/, 'git rebase info message seen' );
     ok( -e "$repo2/.testfile", 'updated file is there' );
     ok( -l "$home2/.testfile", 'updated file is installed' );
 
@@ -137,20 +129,12 @@ subtest 'modifications in two repos, merge' => sub {
 
     run_dfm( $home2, $repo2, 'mi' );
 
-    like(
-        $trap->stdout,
-        qr/local changes detected/,
-        'conflict message in output'
-    );
+    like( $trap->stdout, qr/local changes detected/, 'conflict message in output' );
     ok( !-e "$repo2/.testfile", 'updated file is still not there' );
 
     run_dfm( $home2, $repo2, 'mi', '--merge' );
 
-    like(
-        $trap->stdout,
-        qr/merge made.*recursive/i,
-        'git merge info message seen'
-    );
+    like( $trap->stdout, qr/merge made.*recursive/i, 'git merge info message seen' );
     ok( -e "$repo2/.testfile", 'updated file is there' );
     ok( -l "$home2/.testfile", 'updated file is installed' );
 
@@ -221,10 +205,9 @@ subtest 'non origin remote different name' => sub {
 
     # on the second host, add the first as a remote
     # and install from the personal branch
-    run_dfm( $home2, $repo2, 'remote', 'add', 'upstream', $origin );
-    run_dfm( $home2, $repo2, 'fetch', 'upstream' );
-    run_dfm( $home2, $repo2, 'checkout', '-b', 'business',
-        'upstream/personal' );
+    run_dfm( $home2, $repo2, 'remote',   'add', 'upstream', $origin );
+    run_dfm( $home2, $repo2, 'fetch',    'upstream' );
+    run_dfm( $home2, $repo2, 'checkout', '-b',  'business', 'upstream/personal' );
     run_dfm( $home2, $repo2, 'install' );
 
     # next, make a change in the first, on the personal branch
@@ -247,20 +230,12 @@ subtest 'check remote branch' => sub {
     run_dfm( $home, $repo, 'updates' );
 
     ok( $trap->exit() != 0, 'updates throws non-zero exit code' );
-    like(
-        $trap->stdout,
-        qr/no remote found for branch personal/,
-        '"no remote" message in output'
-    );
+    like( $trap->stdout, qr/no remote found for branch personal/, '"no remote" message in output' );
 
     run_dfm( $home, $repo, 'mergeandinstall' );
 
     ok( $trap->exit() != 0, 'mergeandinstall throws non-zero exit code' );
-    like(
-        $trap->stdout,
-        qr/no remote found for branch personal/,
-        '"no remote" message in output'
-    );
+    like( $trap->stdout, qr/no remote found for branch personal/, '"no remote" message in output' );
 };
 
 done_testing;

@@ -163,7 +163,7 @@ sub run_dfm {
         }
 
         if ( !$repo_dir ) {
-            ERROR( "unable to discover dotfiles repo and dfm is running from its own repo" );
+            ERROR("unable to discover dotfiles repo and dfm is running from its own repo");
             exit(-2);
         }
     }
@@ -176,14 +176,14 @@ sub run_dfm {
     DEBUG("Repo dir: $repo_dir");
 
     # extract the shell name from env
-    my $shell = basename($ENV{SHELL});
-    $shellrc_filename = '.'.$shell.'rc';
+    my $shell = basename( $ENV{SHELL} );
+    $shellrc_filename = '.' . $shell . 'rc';
 
     DEBUG("Shell: $shell, Shell RC filename: $shellrc_filename");
 
     # shellrc in MacOS is ~/.profile
-    if ( lc($OSNAME) eq 'darwin' and $shell eq 'bash') {
-            $shellrc_filename = '.profile';
+    if ( lc($OSNAME) eq 'darwin' and $shell eq 'bash' ) {
+        $shellrc_filename = '.profile';
     }
 
     if ( exists $commands->{$command} ) {
@@ -286,7 +286,7 @@ sub merge_and_install {
 
             # if a decision wasn't made about how to deal with local commits
             if ( !$opts->{'merge'} && !$opts->{'rebase'} ) {
-                WARN( "local changes detected, run with either --merge or --rebase" );
+                WARN("local changes detected, run with either --merge or --rebase");
                 print $local_changes, "\n";
                 exit;
             }
@@ -413,7 +413,7 @@ sub install_files {
             install_files( "$source_dir/$recurse", "$target_dir/$recurse", $recurse_options );
         }
         else {
-            WARN( "couldn't recurse into $source_dir/$recurse, not a directory" );
+            WARN("couldn't recurse into $source_dir/$recurse, not a directory");
         }
     }
 
@@ -505,7 +505,7 @@ sub uninstall_files {
             uninstall_files( "$source_dir/$recurse", "$target_dir/$recurse" );
         }
         else {
-            WARN( "couldn't recurse into $target_dir/$recurse, not a directory" );
+            WARN("couldn't recurse into $target_dir/$recurse, not a directory");
         }
     }
 }
@@ -652,7 +652,7 @@ sub cleanup_dangling_symlinks {
 
             DEBUG("target_base $target_base $source_dir");
             if ( $target_base eq $source_dir ) {
-                INFO( "  Cleaning up dangling symlink $direntry ($link_target)." );
+                INFO("  Cleaning up dangling symlink $direntry ($link_target).");
                 unlink($direntry) if !$opts{'dry-run'};
             }
         }
@@ -825,7 +825,7 @@ sub _load_dfminstall {
                 }
                 elsif ( $options[0] eq 'chmod' ) {
                     if ( !$options[1] ) {
-                        ERROR( "chmod option requires a mode (e.g. 0600) in $dfminstall_path" );
+                        ERROR("chmod option requires a mode (e.g. 0600) in $dfminstall_path");
                         exit 1;
                     }
                     if ( $options[1] !~ /^[0-7]{4}$/ ) {

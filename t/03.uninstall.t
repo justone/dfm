@@ -45,10 +45,8 @@ SKIP: {
     ok( -e "$home/bin/preexisting", 'bin from backup is restored' );
     ok( -l "$home/.other",          'other symlink still exists' );
 
-    ok( !-l "$home/.ssh/config", '.ssh/config is no longer a symlink' );
-    ok( -e "$home/.ssh/config/preexisting",
-        '.ssh/config from backup is restored'
-    );
+    ok( !-l "$home/.ssh/config",            '.ssh/config is no longer a symlink' );
+    ok( -e "$home/.ssh/config/preexisting", '.ssh/config from backup is restored' );
 
 SKIP: {
         skip 'File::Slurp not found', 1 unless $file_slurp_available;
