@@ -4,7 +4,7 @@
       "Nate Jones <nate@endot.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v0.11.0, CPAN::Meta::Converter version 2.132510",
+   "generated_by" : "Minilla/v2.2.0, CPAN::Meta::Converter version 2.142690",
    "license" : [
       "perl_5"
    ],
@@ -28,15 +28,14 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "CPAN::Meta" : "0",
-            "CPAN::Meta::Prereqs" : "0",
             "Module::Build" : "0.38"
          }
       },
       "develop" : {
          "requires" : {
             "Test::CPAN::Meta" : "0",
-            "Test::MinimumVersion" : "0.10108",
+            "Test::MinimumVersion::Fast" : "0.04",
+            "Test::PAUSE::Permissions" : "0.04",
             "Test::Pod" : "1.41",
             "Test::Spellunker" : "v0.2.7"
          }
@@ -66,12 +65,14 @@
          "web" : "https://github.com/justone/dfm"
       }
    },
-   "version" : "v0.7.1",
+   "version" : "v0.7.2",
    "x_contributors" : [
       "David Bartle <captindave@gmail.com>",
       "Dani Perez <danielperezalcazar+heroku@gmail.com>",
       "Jeremiah Snapp <jeremiah.snapp@gmail.com>",
       "Nate Parsons <parsons.nate@gmail.com>",
-      "seth-- <xd.seth@gmail.com>"
+      "seth-- <xd.seth@gmail.com>",
+      "Robin Neatherway <robin.neatherway@gmail.com>",
+      "Luis Rascão <luis.rascao@gmail.com>"
    ]
 }
