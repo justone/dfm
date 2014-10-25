@@ -60,15 +60,8 @@ my $commands = {
     'uninstall' => sub {
         my $argv = shift;
 
-        INFO( "Uninstalling dotfiles..." . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
-
-        DEBUG("Running in [$RealBin] and installing in [$home]");
-
         # uninstall files
-        uninstall_files( _abs_repo_path( $home, $repo_dir ), $home );
-
-        # remove the shell loader
-        unconfigure_shell_loader();
+        uninstall($home, $repo_dir);
     },
     'import' => sub {
         my $argv = shift;
@@ -349,6 +342,29 @@ sub install {
 
     if ($shellrc_load_filename) {
         configure_shell_loader();
+    }
+}
+
+sub uninstall {
+    my ( $home, $repo_dir ) = @_;
+
+    INFO( "Uninstalling dotfiles..." . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
+
+    DEBUG("Running in [$RealBin] and installing in [$home]");
+
+    # uninstall files
+    uninstall_files( _abs_repo_path( $home, $repo_dir ), $home );
+
+    # link in the shell loader
+    if ( -e _abs_repo_path( $home, $repo_dir ) . "/.shellrc.load" ) {
+        $shellrc_load_filename = '.shellrc.load';
+    }
+    elsif ( -e _abs_repo_path( $home, $repo_dir ) . "/.bashrc.load" ) {
+        $shellrc_load_filename = '.bashrc.load';
+    }
+
+    if ($shellrc_load_filename) {
+        unconfigure_shell_loader();
     }
 }
 
