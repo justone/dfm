@@ -36,7 +36,7 @@ sub simple_repo {
     `git add .`;
     `git commit -m 'initial commit'`;
     chdir($Bin);
-    `git clone --bare '$repo' '$repo.git'`;
+    `git clone --bare '$repo' '$repo.git' 2> /dev/null`;
     `rm -rf '$repo'`;
 
     return "$repo.git";
@@ -57,7 +57,7 @@ sub minimum_home {
     `mkdir -p '$home'`;
     `echo "[user]\n\tname = Test User\n\temail = test\@test.com" > '$home/.gitconfig'`;
 
-    `git clone 'file://$origin_repo_path' '$repo'`;
+    `git clone 'file://$origin_repo_path' '$repo' 2> /dev/null`;
 
     return ( $home, $repo, $origin_repo_path );
 }
