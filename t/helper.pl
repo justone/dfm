@@ -109,6 +109,7 @@ sub run_dfm {
     my ( $home, $repo, @args ) = @_;
     trap {
         $ENV{HOME} = $home;
+        $ENV{SHELL} ||= '/bin/bash';
         DFM::run_dfm( "$repo/bin", @args );
     };
 
