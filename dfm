@@ -16,6 +16,7 @@ our $VERSION = 'v0.7.1';
 
 my %opts;
 my $shellrc_filename;
+my $shellrc_load_filename;
 my $repo_dir;
 my $home;
 
@@ -312,8 +313,17 @@ sub install {
 
     install_files( _abs_repo_path( $home, $repo_dir ), $home );
 
+    $shellrc_load_filename = '';
+
     # link in the shell loader
     if ( -e _abs_repo_path( $home, $repo_dir ) . "/.shellrc.load" ) {
+        $shellrc_load_filename = '.shellrc.load';
+    }
+    if ( !$shellrc_load_filename && -e _abs_repo_path( $home, $repo_dir ) . "/.bashrc.load" ) {
+        $shellrc_load_filename = '.bashrc.load';
+    }
+
+    if ($shellrc_load_filename) {
         configure_shell_loader();
     }
 }
@@ -442,7 +452,7 @@ sub configure_shell_loader {
     # check if the loader is in
     if ( $shellrc_contents !~ /\.shellrc\.load/ ) {
         INFO("Appending loader to $shellrc_filename");
-        $shellrc_contents .= "\n. \$HOME/.shellrc.load\n";
+        $shellrc_contents .= "\n. \$HOME/$shellrc_load_filename\n";
     }
 
     _write_shellrc_contents($shellrc_contents);
@@ -655,7 +665,7 @@ sub unconfigure_shell_loader {
     my $shellrc_contents = _read_shellrc_contents();
 
     # remove shell loader if found
-    $shellrc_contents =~ s{\n. \$HOME/.shellrc.load\n}{}gs;
+    $shellrc_contents =~ s{\n. \$HOME/$shellrc_load_filename\n}{}gs;
 
     _write_shellrc_contents($shellrc_contents);
 }
