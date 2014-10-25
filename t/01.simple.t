@@ -47,6 +47,39 @@ SKIP: {
     ok( !-e "$home/t",         'no t dir in homedir' );
 };
 
+subtest 'shellrc.load instead of bashrc.load' => sub {
+    focus('shellrc');
+
+    my ( $home, $repo, $origin ) = minimum_home('shellrc');
+    `touch $repo/.shellrc.load`;    # make sure there's a loader
+
+    run_dfm( $home, $repo, 'install', '--verbose' );
+
+SKIP: {
+        skip 'File::Slurp not found', 1 unless $file_slurp_available;
+
+        ok( read_file("$home/$profile_filename") =~ /shellrc.load/,
+            "loader present in $profile_filename" );
+    }
+};
+
+subtest 'zsh' => sub {
+    focus('zsh');
+
+    my ( $home, $repo, $origin ) = minimum_home('shellrc');
+    `touch $repo/.shellrc.load`;    # make sure there's a loader
+
+    local $ENV{SHELL} = '/bin/zsh';
+
+    run_dfm( $home, $repo, 'install', '--verbose' );
+
+SKIP: {
+        skip 'File::Slurp not found', 1 unless $file_slurp_available;
+
+        ok( read_file("$home/.zshrc") =~ /shellrc.load/, "loader present in .zshrc" );
+    }
+};
+
 subtest 'dangling symlinks' => sub {
     focus('dangling');
 

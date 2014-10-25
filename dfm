@@ -319,7 +319,7 @@ sub install {
     if ( -e _abs_repo_path( $home, $repo_dir ) . "/.shellrc.load" ) {
         $shellrc_load_filename = '.shellrc.load';
     }
-    if ( !$shellrc_load_filename && -e _abs_repo_path( $home, $repo_dir ) . "/.bashrc.load" ) {
+    elsif ( -e _abs_repo_path( $home, $repo_dir ) . "/.bashrc.load" ) {
         $shellrc_load_filename = '.bashrc.load';
     }
 
