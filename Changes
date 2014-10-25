@@ -3,6 +3,7 @@ Revision history for Perl extension App-Dotfiles-Manager
 {{$NEXT}}
 
     - Support other shells (lrascao)
+    - Support mklink on Windows (rneatherway)
 
 v0.7.1 2014-02-24T00:10:54Z
 
