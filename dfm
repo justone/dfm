@@ -450,9 +450,15 @@ sub configure_shell_loader {
     my $shellrc_contents = _read_shellrc_contents();
 
     # check if the loader is in
-    if ( $shellrc_contents !~ /\.shellrc\.load/ ) {
+    if ( $shellrc_contents !~ /$shellrc_load_filename/ ) {
         INFO("Appending loader to $shellrc_filename");
         $shellrc_contents .= "\n. \$HOME/$shellrc_load_filename\n";
+    }
+
+    # if the new loader filename (.shellrc.load) is used, but the old loader
+    # filename (.bashrc.load) is in the shell rc, remove it
+    if ( $shellrc_load_filename =~ m/shellrc/ && $shellrc_contents =~ /\.bashrc\.load/ ) {
+        $shellrc_contents =~ s{\n. \$HOME/\.bashrc\.load\n}{}gs;
     }
 
     _write_shellrc_contents($shellrc_contents);

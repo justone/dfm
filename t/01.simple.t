@@ -80,6 +80,25 @@ SKIP: {
     }
 };
 
+subtest 'shellrc.load after bashrc.load' => sub {
+    focus('switch_to_shellrc');
+
+    my ( $home, $repo, $origin ) = minimum_home('switch_to_shellrc');
+    `touch $repo/.shellrc.load`;    # make sure there's a loader
+
+    `echo "\n. \\\$HOME/.bashrc.load" > $home/.bashrc`;
+
+    run_dfm( $home, $repo, 'install', '--verbose' );
+
+SKIP: {
+        skip 'File::Slurp not found', 1 unless $file_slurp_available;
+
+        ok( read_file("$home/$profile_filename") !~ /bashrc.load/,
+            "old loader not present in $profile_filename"
+        );
+    }
+};
+
 subtest 'dangling symlinks' => sub {
     focus('dangling');
 
