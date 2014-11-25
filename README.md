@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/justone/dfm.svg?branch=master)](https://travis-ci.org/justone/dfm)
+[![Build Status](https://travis-ci.org/robertkosten/dfm.svg?branch=master)](https://travis-ci.org/robertkosten/dfm)
 # NAME
 
 dfm - a utility to manage dotfiles
