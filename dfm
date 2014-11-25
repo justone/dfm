@@ -208,15 +208,15 @@ sub run_dfm {
 sub my_symlink {
     my $target = shift;
     my $link   = shift;
-        
+
     if ($^O eq "cygwin")
-    {           
+    {
         my $flags = "";
         if (-d $target) { $flags = "/D" };
 
         $target = `cygpath -w $target`;
         $link   = `cygpath -w $link`;
-        
+
         chomp $target;
         chomp $link;
 
@@ -529,6 +529,21 @@ sub uninstall_files {
         }
     }
 
+    foreach my $execute ( @{ $dfm_install->{execute_uninstall_files} } ) {
+        my $cwd = getcwd();
+
+        if ( -x "$source_dir/$execute" ) {
+            DEBUG("Executing $source_dir/$execute in $cwd");
+            system("'$source_dir/$execute'");
+        }
+        elsif ( -o "$source_dir/$execute" ) {
+            system("chmod +x '$source_dir/$execute'");
+
+            DEBUG("Executing $source_dir/$execute in $cwd");
+            system("'$source_dir/$execute'");
+        }
+    }
+
     foreach my $recurse ( @{ $dfm_install->{recurse_files} } ) {
         if ( -d "$target_dir/$recurse" ) {
             DEBUG("recursing into $target_dir/$recurse");
@@ -824,9 +839,10 @@ sub _load_dfminstall {
             '.gitignore'  => 1,
             '.git'        => 1,
         },
-        recurse_files => [],
-        execute_files => [],
-        chmod_files   => {},
+        recurse_files           => [],
+        execute_files           => [],
+        execute_uninstall_files => [],
+        chmod_files             => {},
     };
 
     if ( -e $dfminstall_path ) {
@@ -852,6 +868,9 @@ sub _load_dfminstall {
                 }
                 elsif ( $options[0] eq 'exec' ) {
                     push( @{ $dfminstall_info->{execute_files} }, $filename );
+                }
+                elsif ( $options[0] eq 'exec-uninstall' ) {
+                    push( @{ $dfminstall_info->{execute_uninstall_files} }, $filename );
                 }
                 elsif ( $options[0] eq 'chmod' ) {
                     if ( !$options[1] ) {
