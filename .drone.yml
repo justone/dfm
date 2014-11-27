@@ -1,3 +1,3 @@
 image: perlbase
 script:
-    - prove -l
+    - prove -l -v
