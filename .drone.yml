@@ -1,0 +1,3 @@
+image: perlbase
+script:
+    - prove -l
