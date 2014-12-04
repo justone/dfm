@@ -65,7 +65,7 @@
          "web" : "https://github.com/justone/dfm"
       }
    },
-   "version" : "v0.7.2",
+   "version" : "v0.7.3",
    "x_contributors" : [
       "David Bartle <captindave@gmail.com>",
       "Dani Perez <danielperezalcazar+heroku@gmail.com>",
@@ -73,6 +73,7 @@
       "Nate Parsons <parsons.nate@gmail.com>",
       "seth-- <xd.seth@gmail.com>",
       "Robin Neatherway <robin.neatherway@gmail.com>",
-      "Luis Rascão <luis.rascao@gmail.com>"
+      "Luis Rascão <luis.rascao@gmail.com>",
+      "Phil Pearl (Lobbes) <phil@perkpartners.com>"
    ]
 }
