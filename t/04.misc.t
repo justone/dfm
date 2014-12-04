@@ -11,7 +11,7 @@ require "$Bin/helper.pl";
 # unset the repo env override so that test work properly
 $ENV{'DFM_REPO'} = undef;
 
-my $version = 'v0.7.2';
+my $version = 'v0.7.3';
 
 check_minimum_test_more_version();
 
