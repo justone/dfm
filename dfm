@@ -12,7 +12,7 @@ use File::Copy;
 use File::Basename;
 use Pod::Usage;
 
-our $VERSION = 'v0.7.2';
+our $VERSION = 'v0.7.3';
 
 my %opts;
 my $shellrc_filename;
@@ -141,6 +141,10 @@ sub run_dfm {
     }
 
     $home = realpath( $ENV{HOME} );
+    if ( !$home ) {
+        ERROR("unable to determine 'realpath' for $ENV{HOME}");
+        exit(-2);
+    }
 
     if ( $ENV{'DFM_REPO'} ) {
         $repo_dir = $ENV{'DFM_REPO'};
@@ -262,19 +266,19 @@ sub check_remote_branch {
 
 # a few log4perl-alikes
 sub ERROR {
-    printf "ERROR: %s\n", shift;
+    print "ERROR: @_\n";
 }
 
 sub WARN {
-    printf "WARN: %s\n", shift;
+    print "WARN: @_\n";
 }
 
 sub INFO {
-    printf "INFO: %s\n", shift if !$opts{quiet};
+    print "INFO: @_\n" if !$opts{quiet};
 }
 
 sub DEBUG {
-    printf "DEBUG: %s\n", shift if $opts{verbose};
+    print "DEBUG: @_\n" if $opts{verbose};
 }
 
 sub fetch_updates {
@@ -515,8 +519,8 @@ sub uninstall_files {
             my $target_base
                 = realpath( File::Spec->rel2abs( File::Spec->catpath( '', @elements ) ) );
 
-            DEBUG("target_base $target_base $source_dir");
-            if ( $target_base eq $source_dir ) {
+            DEBUG( "target_base '", defined $target_base ? $target_base : '', "' $source_dir" );
+            if ( defined $target_base and $target_base eq $source_dir ) {
                 INFO("  Removing $direntry ($link_target).");
                 unlink($direntry) if !$opts{'dry-run'};
             }
@@ -680,8 +684,8 @@ sub cleanup_dangling_symlinks {
             my $target_base
                 = realpath( File::Spec->rel2abs( File::Spec->catpath( '', @elements ) ) );
 
-            DEBUG("target_base $target_base $source_dir");
-            if ( $target_base eq $source_dir ) {
+            DEBUG( "target_base '", defined $target_base ? $target_base : '', "' $source_dir" );
+            if ( defined $target_base and $target_base eq $source_dir ) {
                 INFO("  Cleaning up dangling symlink $direntry ($link_target).");
                 unlink($direntry) if !$opts{'dry-run'};
             }
