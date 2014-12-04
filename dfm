@@ -392,7 +392,11 @@ sub install_files {
         }
 
         # skip vim swap files
-        next if $direntry =~ /.*\.sw.$/;
+        next if $direntry =~ /^\..*\.sw.$/;
+
+        # skip emacs temporary and backup files
+        next if $direntry =~ /^\.#.*$/;
+        next if $direntry =~ /^.*~$/;
 
         # skip any other files
         next if $dfm_install->{skip_files}->{$direntry};
