@@ -2,6 +2,9 @@ Revision history for Perl extension App-Dotfiles-Manager
 
 {{$NEXT}}
 
+    - handle cases where realpath() returns undef (plobbes)
+    - ignore emacs temp files (plobbes)
+
 v0.7.2 2014-10-25T04:15:29Z
 
     - Support other shells (lrascao)
