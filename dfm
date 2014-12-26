@@ -107,6 +107,10 @@ sub run_dfm {
     # set options to nothing so that running multiple times in tests
     # does not reuse options
     %opts = ();
+    $shellrc_filename = undef;
+    $shellrc_load_filename = undef;
+    $repo_dir = undef;
+    $home = undef;
 
     my $command;
 
