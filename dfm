@@ -12,7 +12,7 @@ use File::Copy;
 use File::Basename;
 use Pod::Usage;
 
-our $VERSION = 'v0.7.3';
+our $VERSION = 'v0.7.4';
 
 my %opts;
 my $shellrc_filename;

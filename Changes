@@ -2,6 +2,8 @@ Revision history for Perl extension App-Dotfiles-Manager
 
 {{$NEXT}}
 
+v0.7.4 2014-12-26T05:43:30Z
+
     - fix uninstall handling of other shells (lrascao)
     - add support for executing scripts on uninstall (robertkosten)
 

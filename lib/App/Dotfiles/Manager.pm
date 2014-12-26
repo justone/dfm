@@ -3,7 +3,7 @@ use 5.008005;
 use strict;
 use warnings;
 
-our $VERSION = "v0.7.3";
+our $VERSION = "v0.7.4";
 
 1;
 __END__
