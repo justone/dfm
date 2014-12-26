@@ -56,6 +56,44 @@ SKIP: {
     }
 };
 
+subtest 'uninstall dotfiles (with .shellrc.load)' => sub {
+    focus('uninstall_shellrc');
+
+    my ( $home, $repo ) = minimum_home_with_ssh('uninstall');
+    `touch $repo/.shellrc.load`;    # make sure there's a loader
+    extra_setup($home);
+
+    my $output;
+
+    run_dfm( $home, $repo, 'install', '--verbose' );
+
+    ok( -d "$home/.backup", 'main backup dir exists' );
+    ok( -l "$home/bin",     'bin is a symlink' );
+
+SKIP: {
+        skip 'File::Slurp not found', 1 unless $file_slurp_available;
+
+        ok( read_file("$home/$profile_filename") =~ /shellrc.load/,
+            "loader present in $profile_filename" );
+    }
+
+    run_dfm( $home, $repo, 'uninstall', '--verbose' );
+
+    ok( !-l "$home/bin",            'bin is no longer a symlink' );
+    ok( -e "$home/bin/preexisting", 'bin from backup is restored' );
+    ok( -l "$home/.other",          'other symlink still exists' );
+
+    ok( !-l "$home/.ssh/config",            '.ssh/config is no longer a symlink' );
+    ok( -e "$home/.ssh/config/preexisting", '.ssh/config from backup is restored' );
+
+SKIP: {
+        skip 'File::Slurp not found', 1 unless $file_slurp_available;
+
+        ok( read_file("$home/$profile_filename") !~ /shellrc.load/,
+            "loader absent in $profile_filename" );
+    }
+};
+
 subtest 'uninstall dotfiles (dry-run)' => sub {
     focus('uninstall_dry');
 
