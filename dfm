@@ -33,7 +33,7 @@ my $commands = {
         my $argv = shift;
         DEBUG("Running in [$RealBin] and installing in [$home]");
 
-        GetOptionsFromArray( $argv, \%opts, 'profile|p=s', 'include|i=s', 'exclude|e=s' );
+        GetOptionsFromArray( $argv, \%opts, 'profile|p:s', 'include|i=s', 'exclude|e=s' );
 
         # install files
         install( $home, $repo_dir );
@@ -77,8 +77,9 @@ my $commands = {
     'profile' => sub {
         my $argv = shift;
 
-        GetOptionsFromArray( $argv, \%opts, 'include|o=s', 'exclude|e=s', 'map|m=s' );
+        GetOptionsFromArray( $argv, \%opts, 'include|i=s', 'exclude|e=s', 'map|m=s' );
 
+        my $subcommand = shift @$argv;
         my $name = shift @$argv;
 
         if ( !$name ) {
@@ -86,7 +87,6 @@ my $commands = {
             exit 1;
         }
 
-        my $subcommand = shift @$argv;
         if ( $subcommand eq 'add' ) {
             add_profile( $name, \%opts );
         }
@@ -359,23 +359,27 @@ sub install {
 
     my $install_options = {};
 
-    if ( $opts{'include'} ) {
+    # TODO: support ad-hoc profiles
+    my $dfm_profile_config = $home . "/.dfm_profile_state";
+    my $profile;
+    if ( defined($opts{'profile'} ) ) {
+        if ( $profile = $opts{'profile'} ) {
 
-        # TODO: set up adhoc profile
-        $install_options->{install_include}
-            = [ split( /,/, $opts{'include'} ) ];
+            $install_options = load_profile( $opts{'profile'} );
+
+            set_config( $dfm_profile_config, "main.installed", $opts{'profile'} );
+        } else {
+            INFO("Reverting to default profile");
+            remove_config($dfm_profile_config, "main");
+        }
     }
-    elsif ( $opts{'exclude'} ) {
 
-        # TODO: set up adhoc profile
-        $install_options->{install_exclude}
-            = [ split( /,/, $opts{'exclude'} ) ];
+    if ( $profile = get_config($dfm_profile_config, "main.installed") ) {
+        $install_options = load_profile($profile);
     }
-    elsif ( $opts{'profile'} ) {
 
-        $install_options = load_profile( $opts{'profile'} );
-
-        # TODO: save the profile name as the one currently installed
+    if ( $profile ) {
+        INFO("Installing with profile $profile");
     }
 
     INFO( "Installing dotfiles..." . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
@@ -578,7 +582,7 @@ sub install_files {
         }
     }
 
-    cleanup_dangling_symlinks( $source_dir, $target_dir, $dfm_install->{skip_files} );
+    cleanup_dangling_symlinks( $source_dir, $target_dir, $dfm_install->{skip_files}, $options );
 
     foreach my $recurse ( @{ $dfm_install->{recurse_files} } ) {
         if ( -d "$source_dir/$recurse" ) {
@@ -852,8 +856,9 @@ sub import_files {
 }
 
 sub cleanup_dangling_symlinks {
-    my ( $source_dir, $target_dir, $skip_files ) = @_;
+    my ( $source_dir, $target_dir, $skip_files, $options ) = @_;
     $skip_files ||= {};
+    my $install_exclude = $options->{install_exclude} || [];
 
     DEBUG(" Cleaning up dangling symlinks in $target_dir");
 
@@ -863,8 +868,8 @@ sub cleanup_dangling_symlinks {
 
         DEBUG(" Working on $direntry");
 
-        # if symlink is dangling or is now skipped
-        if ( -l $direntry && ( !-e $direntry || $skip_files->{$direntry} ) ) {
+        # if symlink is dangling or is now skipped or is excluded by profile
+        if ( -l $direntry && ( !-e $direntry || $skip_files->{$direntry} || grep {$_ eq $direntry } @{$install_exclude} ) ) {
             my $link_target = readlink($direntry);
             DEBUG("$direntry points at $link_target");
             my ( $volume, @elements ) = File::Spec->splitpath($link_target);
