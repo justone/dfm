@@ -47,6 +47,58 @@ SKIP: {
     ok( !-e "$home/t",         'no t dir in homedir' );
 };
 
+subtest 'shellrc.load instead of bashrc.load' => sub {
+    focus('shellrc');
+
+    my ( $home, $repo, $origin ) = minimum_home('shellrc');
+    `touch $repo/.shellrc.load`;    # make sure there's a loader
+
+    run_dfm( $home, $repo, 'install', '--verbose' );
+
+SKIP: {
+        skip 'File::Slurp not found', 1 unless $file_slurp_available;
+
+        ok( read_file("$home/$profile_filename") =~ /shellrc.load/,
+            "loader present in $profile_filename" );
+    }
+};
+
+subtest 'zsh' => sub {
+    focus('zsh');
+
+    my ( $home, $repo, $origin ) = minimum_home('shellrc');
+    `touch $repo/.shellrc.load`;    # make sure there's a loader
+
+    local $ENV{SHELL} = '/bin/zsh';
+
+    run_dfm( $home, $repo, 'install', '--verbose' );
+
+SKIP: {
+        skip 'File::Slurp not found', 1 unless $file_slurp_available;
+
+        ok( read_file("$home/.zshrc") =~ /shellrc.load/, "loader present in .zshrc" );
+    }
+};
+
+subtest 'shellrc.load after bashrc.load' => sub {
+    focus('switch_to_shellrc');
+
+    my ( $home, $repo, $origin ) = minimum_home('switch_to_shellrc');
+    `touch $repo/.shellrc.load`;    # make sure there's a loader
+
+    `echo "\n. \\\$HOME/.bashrc.load" > $home/.bashrc`;
+
+    run_dfm( $home, $repo, 'install', '--verbose' );
+
+SKIP: {
+        skip 'File::Slurp not found', 1 unless $file_slurp_available;
+
+        ok( read_file("$home/$profile_filename") !~ /bashrc.load/,
+            "old loader not present in $profile_filename"
+        );
+    }
+};
+
 subtest 'dangling symlinks' => sub {
     focus('dangling');
 
@@ -98,8 +150,7 @@ subtest 'with bin recurse' => sub {
     ok( -d "$home/.backup", 'main backup dir exists' );
     ok( -d "$home/bin",     'bin is a directory' );
     ok( -l "$home/bin/dfm", 'dfm is a symlink' );
-    ok( -e "$home/bin/another" && !-l "$home/bin/another",
-        'existing binary still intact' );
+    ok( -e "$home/bin/another" && !-l "$home/bin/another", 'existing binary still intact' );
 };
 
 subtest 'check deprecated recursion' => sub {
@@ -107,9 +158,7 @@ subtest 'check deprecated recursion' => sub {
 
     my ( $home, $repo );
 
-    ( $home, $repo )
-        = minimum_home( 'deprecated_recurse',
-        { dfminstall_contents => 'bin' } );
+    ( $home, $repo ) = minimum_home( 'deprecated_recurse', { dfminstall_contents => 'bin' } );
 
     run_dfm( $home, $repo, 'install', '--verbose' );
 
@@ -119,15 +168,10 @@ subtest 'check deprecated recursion' => sub {
         'warning present'
     );
     like( $trap->stdout, qr($repo/.dfminstall), '.dfminstall path present' );
-    like(
-        $trap->stdout,
-        qr('bin recurse'),
-        'proper .dfminstall contents mentioned'
-    );
+    like( $trap->stdout, qr('bin recurse'),     'proper .dfminstall contents mentioned' );
 
     ( $home, $repo )
-        = minimum_home( 'deprecated_recurse',
-        { dfminstall_contents => 'bin recurse' } );
+        = minimum_home( 'deprecated_recurse', { dfminstall_contents => 'bin recurse' } );
 
     run_dfm( $home, $repo, 'install', '--verbose' );
 
@@ -184,12 +228,9 @@ subtest 'exec option' => sub {
     focus('exec_option');
 
     my ( $home, $repo, $origin );
-    ( $home, $repo, $origin ) = minimum_home(
-        'exec option',
-        {   dfminstall_contents =>
-                "script1.sh exec\nscript1.sh skip\ntest2 recurse"
-        }
-    );
+    ( $home, $repo, $origin )
+        = minimum_home( 'exec option',
+        { dfminstall_contents => "script1.sh exec\nscript1.sh skip\ntest2 recurse" } );
 
     # set up non-recurse script that needs to be set executable
     `echo "#!/bin/sh\n\necho 'message1';\ntouch testfile" > '$repo/script1.sh'`;
@@ -202,14 +243,12 @@ subtest 'exec option' => sub {
 
     run_dfm( $home, $repo, 'install', '--verbose' );
 
-    like( $trap->stdout, qr/message1/,
-        'output contains output from script1' );
+    like( $trap->stdout, qr/message1/, 'output contains output from script1' );
     ok( -e "$home/testfile",    'file created by script1 exists' );
     ok( !-e "$home/script1.sh", 'script1 is not symlinked into home' );
     ok( -x "$repo/script1.sh",  'script1 file is executable' );
 
-    like( $trap->stdout, qr/message2/,
-        'output contains output from script2' );
+    like( $trap->stdout, qr/message2/, 'output contains output from script2' );
     ok( -e "$home/test2/testfile2",  'file created by script2 exists' );
     ok( -x "$repo/test2/script2.sh", 'script2 file is executable' );
 };
@@ -277,11 +316,7 @@ subtest 'chmod option' => sub {
 
         run_dfm( $home, $repo, 'install', '--verbose' );
 
-        like(
-            $trap->stdout,
-            qr/chmod option requires a mode/,
-            'error message in output'
-        );
+        like( $trap->stdout, qr/chmod option requires a mode/, 'error message in output' );
         is( ( sprintf "%04o", S_IMODE( ( stat("$repo/.ssh/config") )[2] ) ),
             '0644', 'permissions are untouched' );
     };
@@ -293,8 +328,7 @@ subtest 'chmod option' => sub {
 
         run_dfm( $home, $repo, 'install', '--verbose' );
 
-        like( $trap->stdout, qr/bad mode 'himom'/,
-            'error message in output' );
+        like( $trap->stdout, qr/bad mode 'himom'/, 'error message in output' );
         is( ( sprintf "%04o", S_IMODE( ( stat("$repo/.ssh/config") )[2] ) ),
             '0644', 'permissions are untouched' );
     };
@@ -361,11 +395,7 @@ subtest 'command first' => sub {
 
     run_dfm( $home, $repo, '--verbose', 'install' );
 
-    like(
-        $trap->stdout,
-        qr/command should be first/,
-        'correct error message'
-    );
+    like( $trap->stdout, qr/command should be first/, 'correct error message' );
 };
 
 done_testing;

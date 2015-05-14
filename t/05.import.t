@@ -34,8 +34,7 @@ subtest 'single file or directory' => sub {
     subtest 'custom commit message' => sub {
         `echo "contents" > '$home/otherfile'`;
 
-        run_dfm( $home, $repo, 'import', 'otherfile', '--message',
-            'custom commit message' );
+        run_dfm( $home, $repo, 'import', 'otherfile', '--message', 'custom commit message' );
 
         is_tracked_and_linked( $home, $repo, 'otherfile' );
 
@@ -92,11 +91,7 @@ subtest 'skip staged files' => sub {
 
     my ( $tracked, $status, $log ) = inspect_repo($repo);
 
-    like(
-        $status,
-        qr/A  otherfile/,
-        'other staged file is still staged, not committed'
-    );
+    like( $status, qr/A  otherfile/, 'other staged file is still staged, not committed' );
 };
 
 subtest 'two files' => sub {
@@ -116,13 +111,9 @@ subtest 'two files' => sub {
     my ( $tracked, $status, $log ) = inspect_repo($repo);
 
     is( length($status), 0, 'git working dir is clean' );
-    like( $tracked, qr/newfile/,   'newfile is tracked' );
-    like( $tracked, qr/otherfile/, 'otherfile is tracked' );
-    like(
-        $log,
-        qr/importing newfile, otherfile/,
-        'commit message is correct'
-    );
+    like( $tracked, qr/newfile/,                      'newfile is tracked' );
+    like( $tracked, qr/otherfile/,                    'otherfile is tracked' );
+    like( $log,     qr/importing newfile, otherfile/, 'commit message is correct' );
     my @log_lines = split( /\n/, $log );
     cmp_ok( scalar @log_lines, '==', 2, 'only two log messages' );
 };
@@ -137,18 +128,13 @@ subtest 'two files, one missing' => sub {
 
     run_dfm( $home, $repo, qw/import newfile otherfile/ );
 
-    like(
-        $trap->stdout,
-        qr/otherfile not found/,
-        'error message about file is present'
-    );
+    like( $trap->stdout, qr/otherfile not found/, 'error message about file is present' );
 
     my ( $tracked, $status, $log ) = inspect_repo($repo);
 
     is( length($status), 0, 'git working dir is clean' );
-    unlike( $tracked, qr/newfile/, 'newfile is not tracked' );
-    unlike( $log, qr/importing/,
-        'commit message contains no mention of importing' );
+    unlike( $tracked, qr/newfile/,   'newfile is not tracked' );
+    unlike( $log,     qr/importing/, 'commit message contains no mention of importing' );
     my @log_lines = split( /\n/, $log );
     cmp_ok( scalar @log_lines, '==', 1, 'only one log messages' );
 };
@@ -183,11 +169,7 @@ subtest 'full or relative paths to files' => sub {
     like( $tracked, qr/otherfile/, 'otherfile is tracked' );
     like( $tracked, qr/newlink/,   'newlink is tracked' );
     like( $tracked, qr/newlink2/,  'newlink2 is tracked' );
-    like(
-        $log,
-        qr/importing newfile, otherfile, newlink, newlink2/,
-        'commit message is correct'
-    );
+    like( $log, qr/importing newfile, otherfile, newlink, newlink2/, 'commit message is correct' );
     my @log_lines = split( /\n/, $log );
     cmp_ok( scalar @log_lines, '==', 2, 'only two log messages' );
 };
@@ -202,14 +184,13 @@ subtest 'file in recursed directory' => sub {
 
     run_dfm( $home, $repo, 'import', '.ssh/newfile' );
 
-    is_tracked_and_linked( $home, $repo, '.ssh/newfile',
-        '../.dotfiles/.ssh/newfile' );
+    is_tracked_and_linked( $home, $repo, '.ssh/newfile', '../.dotfiles/.ssh/newfile' );
 
     my ( $tracked, $status, $log ) = inspect_repo($repo);
 
     is( length($status), 0, 'git working dir is clean' );
-    like( $tracked, qr{\.ssh/newfile}, 'newfile is tracked' );
-    like( $log, qr{importing \.ssh/newfile}, 'commit message is correct' );
+    like( $tracked, qr{\.ssh/newfile},           'newfile is tracked' );
+    like( $log,     qr{importing \.ssh/newfile}, 'commit message is correct' );
     ok(1);
 };
 
@@ -268,8 +249,7 @@ subtest 'fail on file that is already tracked' => sub {
         `echo "contents" > '$home/.ssh/newfile'`;
 
         run_dfm( $home, $repo, 'import', '.ssh/newfile' );
-        is_tracked_and_linked( $home, $repo, '.ssh/newfile',
-            '../.dotfiles/.ssh/newfile' );
+        is_tracked_and_linked( $home, $repo, '.ssh/newfile', '../.dotfiles/.ssh/newfile' );
 
         run_dfm( $home, $repo, 'import', '.ssh/newfile' );
 
@@ -328,16 +308,8 @@ subtest 'fail for file that is in an untracked directory' => sub {
 
     run_dfm( $home, $repo, 'import', 'foo/bar/newfile', '--verbose' );
 
-    like(
-        $trap->stdout,
-        qr/is in a subdirectory that is not tracked/,
-        'correct error message'
-    );
-    like(
-        $trap->stdout,
-        qr/consider using 'dfm import foo'/,
-        'correct suggestion'
-    );
+    like( $trap->stdout, qr/is in a subdirectory that is not tracked/, 'correct error message' );
+    like( $trap->stdout, qr/consider using 'dfm import foo'/,          'correct suggestion' );
 
     subtest 'recursed file' => sub {
 
@@ -346,16 +318,9 @@ subtest 'fail for file that is in an untracked directory' => sub {
 
         run_dfm( $home, $repo, 'import', '.ssh/foo/newfile', '--verbose' );
 
-        like(
-            $trap->stdout,
-            qr/is in a subdirectory that is not tracked/,
-            'correct error message'
-        );
-        like(
-            $trap->stdout,
-            qr/consider using 'dfm import .ssh\/foo'/,
-            'correct suggestion'
-        );
+        like( $trap->stdout, qr/is in a subdirectory that is not tracked/,
+            'correct error message' );
+        like( $trap->stdout, qr/consider using 'dfm import .ssh\/foo'/, 'correct suggestion' );
     };
 };
 
@@ -373,16 +338,9 @@ subtest 'fail for file that is in a tracked subdirectory' => sub {
     `echo "contents" > '$home/foo/otherfile'`;
     run_dfm( $home, $repo, 'import', 'foo/otherfile', '--verbose' );
 
-    like(
-        $trap->stdout,
-        qr/is in a subdirectory that is already tracked/,
-        'correct error message'
-    );
-    like(
-        $trap->stdout,
-        qr/consider using 'dfm add foo'/,
-        'correct suggestion'
-    );
+    like( $trap->stdout, qr/is in a subdirectory that is already tracked/,
+        'correct error message' );
+    like( $trap->stdout, qr/consider using 'dfm add foo'/, 'correct suggestion' );
 
     subtest 'recursed file' => sub {
         `mkdir '$home/.ssh/foo'`;
@@ -398,11 +356,7 @@ subtest 'fail for file that is in a tracked subdirectory' => sub {
             qr/is in a subdirectory that is already tracked/,
             'correct error message'
         );
-        like(
-            $trap->stdout,
-            qr/consider using 'dfm add .ssh\/foo'/,
-            'correct suggestion'
-        );
+        like( $trap->stdout, qr/consider using 'dfm add .ssh\/foo'/, 'correct suggestion' );
 
     };
 };
@@ -419,11 +373,7 @@ subtest 'fail for file that is skipped' => sub {
 
     run_dfm( $home, $repo, 'import', 'newfile' );
 
-    like(
-        $trap->stdout,
-        qr/file newfile is skipped/,
-        'correct error message'
-    );
+    like( $trap->stdout, qr/file newfile is skipped/, 'correct error message' );
 };
 
 subtest 'fail for file in dotfiles repo' => sub {

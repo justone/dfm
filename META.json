@@ -1,0 +1,80 @@
+{
+   "abstract" : "a utility to manage dotfiles",
+   "author" : [
+      "Nate Jones <nate@endot.org>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Minilla/v2.2.0, CPAN::Meta::Converter version 2.142690",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "App-Dotfiles-Manager",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "xt",
+         "inc",
+         "share",
+         "eg",
+         "examples",
+         "author",
+         "builder"
+      ]
+   },
+   "prereqs" : {
+      "configure" : {
+         "requires" : {
+            "Module::Build" : "0.38"
+         }
+      },
+      "develop" : {
+         "requires" : {
+            "Test::CPAN::Meta" : "0",
+            "Test::MinimumVersion::Fast" : "0.04",
+            "Test::PAUSE::Permissions" : "0.04",
+            "Test::Pod" : "1.41",
+            "Test::Spellunker" : "v0.2.7"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "perl" : "5.008005"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "File::Slurp" : "0",
+            "Test::More" : "0.98",
+            "Test::Trap" : "0"
+         }
+      }
+   },
+   "release_status" : "unstable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/justone/dfm/issues"
+      },
+      "homepage" : "https://github.com/justone/dfm",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/justone/dfm.git",
+         "web" : "https://github.com/justone/dfm"
+      }
+   },
+   "version" : "v0.7.4",
+   "x_contributors" : [
+      "David Bartle <captindave@gmail.com>",
+      "Dani Perez <danielperezalcazar+heroku@gmail.com>",
+      "Jeremiah Snapp <jeremiah.snapp@gmail.com>",
+      "Nate Parsons <parsons.nate@gmail.com>",
+      "seth-- <xd.seth@gmail.com>",
+      "Robin Neatherway <robin.neatherway@gmail.com>",
+      "Luis Rascão <luis.rascao@gmail.com>",
+      "Robert Kosten <contact@develop.robertkosten.de>",
+      "Phil Pearl (Lobbes) <phil@perkpartners.com>"
+   ]
+}

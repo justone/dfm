@@ -11,7 +11,7 @@ require "$Bin/helper.pl";
 # unset the repo env override so that test work properly
 $ENV{'DFM_REPO'} = undef;
 
-my $version = '0.6';
+my $version = 'v0.7.4';
 
 check_minimum_test_more_version();
 
@@ -21,19 +21,12 @@ subtest 'help works on all subcommands' => sub {
     my ( $home, $repo ) = minimum_home('help');
 
     foreach my $command (
-        qw(install mergeandinstall mi updatemergeandinstall umi updates import im uninstall un)
-        )
+        qw(install mergeandinstall mi updatemergeandinstall umi updates import im uninstall un))
     {
         run_dfm( $home, $repo, 'help', $command );
-        like(
-            $trap->stdout,
-            qr/All Options/ms,
-            "all options section for $command"
-        );
-        like( $trap->stdout, qr/Examples/ms,
-            "examples section for $command" );
-        like( $trap->stdout, qr/Description/ms,
-            "description section for $command" );
+        like( $trap->stdout, qr/All Options/ms, "all options section for $command" );
+        like( $trap->stdout, qr/Examples/ms,    "examples section for $command" );
+        like( $trap->stdout, qr/Description/ms, "description section for $command" );
     }
 };
 

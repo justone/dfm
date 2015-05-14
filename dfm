@@ -9,12 +9,14 @@ use Getopt::Long;
 use Cwd qw(realpath getcwd);
 use File::Spec;
 use File::Copy;
+use File::Basename;
 use Pod::Usage;
 
-our $VERSION = '0.6';
+our $VERSION = 'v0.7.4';
 
 my %opts;
-my $profile_filename;
+my $shellrc_filename;
+my $shellrc_load_filename;
 my $repo_dir;
 my $home;
 
@@ -22,7 +24,8 @@ my $command_aliases = {
     'mi'  => 'mergeandinstall',
     'umi' => 'updatemergeandinstall',
     'un'  => 'uninstall',
-    'im'  => 'import'
+    'im'  => 'import',
+    'in'  => 'install'
 };
 
 my $commands = {
@@ -60,16 +63,8 @@ my $commands = {
     'uninstall' => sub {
         my $argv = shift;
 
-        INFO( "Uninstalling dotfiles..."
-                . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
-
-        DEBUG("Running in [$RealBin] and installing in [$home]");
-
         # uninstall files
-        uninstall_files( _abs_repo_path( $home, $repo_dir ), $home );
-
-        # remove the bash loader
-        unconfigure_bash_loader();
+        uninstall($home, $repo_dir);
     },
     'import' => sub {
         my $argv = shift;
@@ -137,12 +132,16 @@ sub run_dfm {
     # set options to nothing so that running multiple times in tests
     # does not reuse options
     %opts = ();
+    $shellrc_filename = undef;
+    $shellrc_load_filename = undef;
+    $repo_dir = undef;
+    $home = undef;
 
     my $command;
 
     if ( scalar(@argv) == 0 || $argv[0] =~ /^-/ ) {
 
-       # check to make sure there's not a dfm subcommand later in the arg list
+        # check to make sure there's not a dfm subcommand later in the arg list
         if ( grep { exists $commands->{$_} } @argv ) {
             ERROR("The command should be first.");
             exit(-2);
@@ -159,14 +158,15 @@ sub run_dfm {
 
         # parse global options first
         Getopt::Long::Configure('pass_through');
-        GetOptionsFromArray(
-            \@argv,    \%opts, 'verbose', 'quiet',
-            'dry-run', 'help', 'version'
-        );
+        GetOptionsFromArray( \@argv, \%opts, 'verbose', 'quiet', 'dry-run', 'help', 'version' );
         Getopt::Long::Configure('no_pass_through');
     }
 
     $home = realpath( $ENV{HOME} );
+    if ( !$home ) {
+        ERROR("unable to determine 'realpath' for $ENV{HOME}");
+        exit(-2);
+    }
 
     if ( $ENV{'DFM_REPO'} ) {
         $repo_dir = $ENV{'DFM_REPO'};
@@ -189,9 +189,7 @@ sub run_dfm {
         }
 
         if ( !$repo_dir ) {
-            ERROR(
-                "unable to discover dotfiles repo and dfm is running from its own repo"
-            );
+            ERROR("unable to discover dotfiles repo and dfm is running from its own repo");
             exit(-2);
         }
     }
@@ -203,10 +201,15 @@ sub run_dfm {
 
     DEBUG("Repo dir: $repo_dir");
 
-    $profile_filename = '.bashrc';
+    # extract the shell name from env
+    my $shell = basename( $ENV{SHELL} );
+    $shellrc_filename = '.' . $shell . 'rc';
 
-    if ( lc($OSNAME) eq 'darwin' ) {
-        $profile_filename = '.profile';
+    DEBUG("Shell: $shell, Shell RC filename: $shellrc_filename");
+
+    # shellrc in MacOS is ~/.profile
+    if ( lc($OSNAME) eq 'darwin' and $shell eq 'bash' ) {
+        $shellrc_filename = '.profile';
     }
 
     if ( exists $commands->{$command} ) {
@@ -225,6 +228,30 @@ sub run_dfm {
 
         # assume it's a git command and call accordingly
         _run_git(@argv);
+    }
+}
+
+sub my_symlink {
+    my $target = shift;
+    my $link   = shift;
+
+    if ($^O eq "cygwin")
+    {
+        my $flags = "";
+        if (-d $target) { $flags = "/D" };
+
+        $target = `cygpath -w $target`;
+        $link   = `cygpath -w $link`;
+
+        chomp $target;
+        chomp $link;
+
+        my $command = "cmd /c mklink $flags \"$link\" \"$target\"";
+        system($command);
+    }
+    else
+    {
+        symlink($target,$link);
     }
 }
 
@@ -261,19 +288,19 @@ sub check_remote_branch {
 
 # a few log4perl-alikes
 sub ERROR {
-    printf "ERROR: %s\n", shift;
+    print "ERROR: @_\n";
 }
 
 sub WARN {
-    printf "WARN: %s\n", shift;
+    print "WARN: @_\n";
 }
 
 sub INFO {
-    printf "INFO: %s\n", shift if !$opts{quiet};
+    print "INFO: @_\n" if !$opts{quiet};
 }
 
 sub DEBUG {
-    printf "DEBUG: %s\n", shift if $opts{verbose};
+    print "DEBUG: @_\n" if $opts{verbose};
 }
 
 sub fetch_updates {
@@ -305,15 +332,11 @@ sub merge_and_install {
     if ( get_changes("$current_branch..$current_branch\@{u}") ) {
 
         # check for local commits
-        if ( my $local_changes
-            = get_changes("$current_branch\@{u}..$current_branch") )
-        {
+        if ( my $local_changes = get_changes("$current_branch\@{u}..$current_branch") ) {
 
             # if a decision wasn't made about how to deal with local commits
             if ( !$opts->{'merge'} && !$opts->{'rebase'} ) {
-                WARN(
-                    "local changes detected, run with either --merge or --rebase"
-                );
+                WARN("local changes detected, run with either --merge or --rebase");
                 print $local_changes, "\n";
                 exit;
             }
@@ -355,16 +378,47 @@ sub install {
         # TODO: save the profile name as the one currently installed
     }
 
-    INFO(
-        "Installing dotfiles..." . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
+    INFO( "Installing dotfiles..." . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
 
     DEBUG("Running in [$RealBin] and installing in [$home]");
 
     install_files( _abs_repo_path( $home, $repo_dir ), $home, $install_options );
 
-    # link in the bash loader
-    if ( -e _abs_repo_path( $home, $repo_dir ) . "/.bashrc.load" ) {
-        configure_bash_loader();
+    $shellrc_load_filename = '';
+
+    # link in the shell loader
+    if ( -e _abs_repo_path( $home, $repo_dir ) . "/.shellrc.load" ) {
+        $shellrc_load_filename = '.shellrc.load';
+    }
+    elsif ( -e _abs_repo_path( $home, $repo_dir ) . "/.bashrc.load" ) {
+        $shellrc_load_filename = '.bashrc.load';
+    }
+
+    if ($shellrc_load_filename) {
+        configure_shell_loader();
+    }
+}
+
+sub uninstall {
+    my ( $home, $repo_dir ) = @_;
+
+    INFO( "Uninstalling dotfiles..." . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
+
+    DEBUG("Running in [$RealBin] and installing in [$home]");
+
+    # uninstall files
+    uninstall_files( _abs_repo_path( $home, $repo_dir ), $home );
+
+    # link in the shell loader
+    if ( -e _abs_repo_path( $home, $repo_dir ) . "/.shellrc.load" ) {
+        $shellrc_load_filename = '.shellrc.load';
+    }
+    elsif ( -e _abs_repo_path( $home, $repo_dir ) . "/.bashrc.load" ) {
+        $shellrc_load_filename = '.bashrc.load';
+    }
+
+    if ($shellrc_load_filename) {
+        unconfigure_shell_loader();
     }
 }
 
@@ -487,7 +541,11 @@ sub install_files {
     foreach my $direntry ( readdir($dirh) ) {
 
         # skip vim swap files
-        next if $direntry =~ /.*\.sw.$/;
+        next if $direntry =~ /^\..*\.sw.$/;
+
+        # skip emacs temporary and backup files
+        next if $direntry =~ /^\.#.*$/;
+        next if $direntry =~ /^.*~$/;
 
         # skip any other files
         next if $dfm_install->{skip_files}->{$direntry};
@@ -515,7 +573,7 @@ sub install_files {
                     if !$opts{'dry-run'};
             }
             INFO("  Symlinking $target ($symlink_base/$direntry).");
-            symlink( "$symlink_base/$direntry", "$target" )
+            my_symlink( "$symlink_base/$direntry", "$target" )
                 if !$opts{'dry-run'};
         }
     }
@@ -553,13 +611,10 @@ sub install_files {
             }
 
             # TODO: add install_map munging
-            install_files( "$source_dir/$recurse", "$target_dir/$recurse",
-                $recurse_options );
+            install_files( "$source_dir/$recurse", "$target_dir/$recurse", $recurse_options );
         }
         else {
-            WARN(
-                "couldn't recurse into $source_dir/$recurse, not a directory"
-            );
+            WARN("couldn't recurse into $source_dir/$recurse, not a directory");
         }
     }
 
@@ -590,18 +645,24 @@ sub install_files {
     chdir($cwd_before_install);
 }
 
-sub configure_bash_loader {
+sub configure_shell_loader {
     chdir($home);
 
-    my $bashrc_contents = _read_bashrc_contents();
+    my $shellrc_contents = _read_shellrc_contents();
 
     # check if the loader is in
-    if ( $bashrc_contents !~ /\.bashrc\.load/ ) {
-        INFO("Appending loader to $profile_filename");
-        $bashrc_contents .= "\n. \$HOME/.bashrc.load\n";
+    if ( $shellrc_contents !~ /$shellrc_load_filename/ ) {
+        INFO("Appending loader to $shellrc_filename");
+        $shellrc_contents .= "\n. \$HOME/$shellrc_load_filename\n";
     }
 
-    _write_bashrc_contents($bashrc_contents);
+    # if the new loader filename (.shellrc.load) is used, but the old loader
+    # filename (.bashrc.load) is in the shell rc, remove it
+    if ( $shellrc_load_filename =~ m/shellrc/ && $shellrc_contents =~ /\.bashrc\.load/ ) {
+        $shellrc_contents =~ s{\n. \$HOME/\.bashrc\.load\n}{}gs;
+    }
+
+    _write_shellrc_contents($shellrc_contents);
 }
 
 sub uninstall_files {
@@ -628,11 +689,11 @@ sub uninstall_files {
             my ( $volume, @elements ) = File::Spec->splitpath($link_target);
             my $element = pop @elements;
 
-            my $target_base = realpath(
-                File::Spec->rel2abs( File::Spec->catpath( '', @elements ) ) );
+            my $target_base
+                = realpath( File::Spec->rel2abs( File::Spec->catpath( '', @elements ) ) );
 
-            DEBUG("target_base $target_base $source_dir");
-            if ( $target_base eq $source_dir ) {
+            DEBUG( "target_base '", defined $target_base ? $target_base : '', "' $source_dir" );
+            if ( defined $target_base and $target_base eq $source_dir ) {
                 INFO("  Removing $direntry ($link_target).");
                 unlink($direntry) if !$opts{'dry-run'};
             }
@@ -645,15 +706,28 @@ sub uninstall_files {
         }
     }
 
+    foreach my $execute ( @{ $dfm_install->{execute_uninstall_files} } ) {
+        my $cwd = getcwd();
+
+        if ( -x "$source_dir/$execute" ) {
+            DEBUG("Executing $source_dir/$execute in $cwd");
+            system("'$source_dir/$execute'");
+        }
+        elsif ( -o "$source_dir/$execute" ) {
+            system("chmod +x '$source_dir/$execute'");
+
+            DEBUG("Executing $source_dir/$execute in $cwd");
+            system("'$source_dir/$execute'");
+        }
+    }
+
     foreach my $recurse ( @{ $dfm_install->{recurse_files} } ) {
         if ( -d "$target_dir/$recurse" ) {
             DEBUG("recursing into $target_dir/$recurse");
             uninstall_files( "$source_dir/$recurse", "$target_dir/$recurse" );
         }
         else {
-            WARN(
-                "couldn't recurse into $target_dir/$recurse, not a directory"
-            );
+            WARN("couldn't recurse into $target_dir/$recurse, not a directory");
         }
     }
 }
@@ -663,8 +737,7 @@ sub relative_to_target {
 
     if ( -l $tryfile ) {
         my ( $volume, $dirs, $lfile ) = File::Spec->splitpath($tryfile);
-        return File::Spec->abs2rel(
-            File::Spec->catfile( realpath($dirs), $lfile ), $target_dir );
+        return File::Spec->abs2rel( File::Spec->catfile( realpath($dirs), $lfile ), $target_dir );
     }
     else {
         return File::Spec->abs2rel( realpath($tryfile), $target_dir );
@@ -719,8 +792,7 @@ sub import_files {
         DEBUG("file path, relative to homedir: $file");
 
         my ( $in_a_subdir, $subdir )
-            = _file_in_tracked_or_untracked( $source_dir, $source_dir,
-            $file );
+            = _file_in_tracked_or_untracked( $source_dir, $source_dir, $file );
         if ( $in_a_subdir eq 'untracked' ) {
             ERROR(
                 "file $file is in a subdirectory that is not tracked, consider using 'dfm import $subdir'."
@@ -741,8 +813,7 @@ sub import_files {
         # detect file that's already tracked, either by being a symlink that
         # points into the repo or in the repo itself
         if ((   -l "$target_dir/$file"
-                && (readlink("$target_dir/$file")
-                    =~ /(\.\.\/)*$symlink_base/ )
+                && ( readlink("$target_dir/$file") =~ /(\.\.\/)*$symlink_base/ )
             )
             || $file =~ /^$symlink_base/
             )
@@ -770,11 +841,9 @@ sub import_files {
     }
 
     # TODO handle profile implications
-    install_files( _abs_repo_path( $home, $repo_dir ),
-        $home, { install_only => [@$files] } );
+    install_files( _abs_repo_path( $home, $repo_dir ), $home, { install_only => [@$files] } );
 
-    INFO( "Committing with message '$message'"
-            . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
+    INFO( "Committing with message '$message'" . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
     if ( !$opts{'dry-run'} ) {
         if ( !$opts{'no-commit'} ) {
             _run_git( 'commit', @$files, '-m', $message );
@@ -801,54 +870,52 @@ sub cleanup_dangling_symlinks {
             my ( $volume, @elements ) = File::Spec->splitpath($link_target);
             my $element = pop @elements;
 
-            my $target_base = realpath(
-                File::Spec->rel2abs( File::Spec->catpath( '', @elements ) ) );
+            my $target_base
+                = realpath( File::Spec->rel2abs( File::Spec->catpath( '', @elements ) ) );
 
-            DEBUG("target_base $target_base $source_dir");
-            if ( $target_base eq $source_dir ) {
-                INFO(
-                    "  Cleaning up dangling symlink $direntry ($link_target)."
-                );
+            DEBUG( "target_base '", defined $target_base ? $target_base : '', "' $source_dir" );
+            if ( defined $target_base and $target_base eq $source_dir ) {
+                INFO("  Cleaning up dangling symlink $direntry ($link_target).");
                 unlink($direntry) if !$opts{'dry-run'};
             }
         }
     }
 }
 
-sub unconfigure_bash_loader {
+sub unconfigure_shell_loader {
     chdir($home);
 
-    my $bashrc_contents = _read_bashrc_contents();
+    my $shellrc_contents = _read_shellrc_contents();
 
-    # remove bash loader if found
-    $bashrc_contents =~ s{\n. \$HOME/.bashrc.load\n}{}gs;
+    # remove shell loader if found
+    $shellrc_contents =~ s{\n. \$HOME/$shellrc_load_filename\n}{}gs;
 
-    _write_bashrc_contents($bashrc_contents);
+    _write_shellrc_contents($shellrc_contents);
 }
 
-sub _write_bashrc_contents {
-    my $bashrc_contents = shift;
+sub _write_shellrc_contents {
+    my $shellrc_contents = shift;
 
     if ( !$opts{'dry-run'} ) {
-        open( my $bashrc_out, '>', $profile_filename );
-        print $bashrc_out $bashrc_contents;
-        close $bashrc_out;
+        open( my $shellrc_out, '>', $shellrc_filename );
+        print $shellrc_out $shellrc_contents;
+        close $shellrc_out;
     }
 }
 
-sub _read_bashrc_contents {
-    my $bashrc_contents;
+sub _read_shellrc_contents {
+    my $shellrc_contents;
     {
         local $INPUT_RECORD_SEPARATOR = undef;
-        if ( open( my $bashrc_in, '<', $profile_filename ) ) {
-            $bashrc_contents = <$bashrc_in>;
-            close $bashrc_in;
+        if ( open( my $shellrc_in, '<', $shellrc_filename ) ) {
+            $shellrc_contents = <$shellrc_in>;
+            close $shellrc_in;
         }
         else {
-            $bashrc_contents = '';
+            $shellrc_contents = '';
         }
     }
-    return $bashrc_contents;
+    return $shellrc_contents;
 }
 
 sub _run_git {
@@ -882,9 +949,7 @@ sub _calculate_symlink_base {
     my $symlink_base;
 
     # if the paths have no first element in common
-    if ( ( File::Spec->splitdir($source_dir) )[1] ne
-        ( File::Spec->splitdir($target_dir) )[1] )
-    {
+    if ( ( File::Spec->splitdir($source_dir) )[1] ne ( File::Spec->splitdir($target_dir) )[1] ) {
         $symlink_base = $source_dir;    # use absolute path
     }
     else {
@@ -916,8 +981,7 @@ sub _file_in_tracked_or_untracked {
     my @dirs = File::Spec->splitdir($file);
     if ( scalar(@dirs) > 1 ) {
         my $recurse_dir = shift(@dirs);
-        if ( grep { $recurse_dir eq $_ } @{ $dfm_install->{recurse_files} } )
-        {
+        if ( grep { $recurse_dir eq $_ } @{ $dfm_install->{recurse_files} } ) {
             chdir($cwd_before_inspection);
             return _file_in_tracked_or_untracked(
                 $orig_source_dir,
@@ -926,8 +990,7 @@ sub _file_in_tracked_or_untracked {
             );
         }
         else {
-            my $relative_path
-                = File::Spec->abs2rel( $source_dir, $orig_source_dir );
+            my $relative_path = File::Spec->abs2rel( $source_dir, $orig_source_dir );
 
             my $dir_type = -e $recurse_dir ? 'tracked' : 'untracked';
 
@@ -954,9 +1017,10 @@ sub _load_dfminstall {
             '.gitignore'  => 1,
             '.git'        => 1,
         },
-        recurse_files => [],
-        execute_files => [],
-        chmod_files   => {},
+        recurse_files           => [],
+        execute_files           => [],
+        execute_uninstall_files => [],
+        chmod_files             => {},
     };
 
     if ( -e $dfminstall_path ) {
@@ -983,11 +1047,12 @@ sub _load_dfminstall {
                 elsif ( $options[0] eq 'exec' ) {
                     push( @{ $dfminstall_info->{execute_files} }, $filename );
                 }
+                elsif ( $options[0] eq 'exec-uninstall' ) {
+                    push( @{ $dfminstall_info->{execute_uninstall_files} }, $filename );
+                }
                 elsif ( $options[0] eq 'chmod' ) {
                     if ( !$options[1] ) {
-                        ERROR(
-                            "chmod option requires a mode (e.g. 0600) in $dfminstall_path"
-                        );
+                        ERROR("chmod option requires a mode (e.g. 0600) in $dfminstall_path");
                         exit 1;
                     }
                     if ( $options[1] !~ /^[0-7]{4}$/ ) {
@@ -1004,8 +1069,7 @@ sub _load_dfminstall {
         close($skip_fh);
         $dfminstall_info->{skip_files}->{skip} = 1;
 
-        DEBUG("Skipped file: $_")
-            for keys %{ $dfminstall_info->{skip_files} };
+        DEBUG("Skipped file: $_") for keys %{ $dfminstall_info->{skip_files} };
     }
 
     return $dfminstall_info;

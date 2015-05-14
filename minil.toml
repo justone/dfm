@@ -1,0 +1,9 @@
+# Minilla configuration
+# https://metacpan.org/release/Minilla
+
+name="App-Dotfiles-Manager"
+script_files = ['dfm']
+badges = ['travis']
+
+[release]
+do_not_upload_to_cpan=true
