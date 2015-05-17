@@ -590,6 +590,11 @@ sub install_files {
             INFO("  Symlinking $target ($symlink_base/$direntry).");
             my_symlink( "$symlink_base/$direntry", "$target" )
                 if !$opts{'dry-run'};
+        } elsif (readlink($target) ne "$symlink_base/$direntry") {
+            INFO("Correcting $target to point to $symlink_base/$direntry");
+            unlink($target) if !$opts{'dry-run'};
+            my_symlink( "$symlink_base/$direntry", "$target" )
+                if !$opts{'dry-run'};
         }
     }
 
