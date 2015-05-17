@@ -77,7 +77,7 @@ my $commands = {
     'profile' => sub {
         my $argv = shift;
 
-        GetOptionsFromArray( $argv, \%opts, 'include|i=s', 'exclude|e=s', 'map|m=s', 'no-commit|n' );
+        GetOptionsFromArray( $argv, \%opts, 'include|i=s', 'exclude|e=s', 'overlay|o=s', 'no-commit|n' );
 
         my $subcommand = shift @$argv;
         my $name = shift @$argv;
@@ -431,14 +431,14 @@ sub load_profile {
     my $profile_config = _abs_repo_path( $home, $repo_dir ) . "/.dfm_profiles";
 
     my $profile = {};
-    foreach my $type (qw(include exclude map)) {
+    foreach my $type (qw(include exclude)) {
         if ( my $files = get_config( $profile_config, "${name}.${type}" ) ) {
-            $profile->{"install_$type"} = [ split( /,/, $files ) ]
+            $profile->{"install_$type"} = [ split( /,/, $files ) ];
         }
     }
 
-    if ( $profile->{"install_map"} ) {
-        $profile->{"install_map"} = { map { split( /=/, $_ ) } @{ $profile->{"install_map"} } };
+    if ( my $overlay = get_config( $profile_config, "${name}.overlay")) {
+        $profile->{"install_overlay"} = $overlay;
     }
 
     if ( scalar keys %$profile == 0 ) {
@@ -472,14 +472,14 @@ sub add_profile {
     # TODO: check for an existing profile
     my $profile_info = {};
 
-    foreach my $type (qw(include exclude map)) {
+    foreach my $type (qw(include exclude overlay)) {
         if ( my $files = $opts{$type} ) {
             $profile_info->{$type} = $files;
         }
     }
 
     if ( scalar keys %$profile_info == 0 ) {
-        ERROR('Need to specify either a list of files to include or exclude or map.');
+        ERROR('Need to specify either a list of files to include or exclude or overlay.');
         exit 1;
     }
     if ( $profile_info->{include} && $profile_info->{exclude} ) {
@@ -489,7 +489,7 @@ sub add_profile {
 
     my $profile_config = _abs_repo_path( $home, $repo_dir ) . "/.dfm_profiles";
 
-    foreach my $type (qw(include exclude map)) {
+    foreach my $type (qw(include exclude overlay)) {
         if ( my $files = $profile_info->{$type} ) {
             set_config( $profile_config, "${name}.${type}", $files );
         }
@@ -532,11 +532,12 @@ sub install_files {
 
     my $install_include = $options->{install_include};
     my $install_exclude = $options->{install_exclude};
-    my $install_map     = $options->{install_map};
+    my $install_overlay = $options->{install_overlay};
 
     DEBUG("Installing from $source_dir into $target_dir");
 
     my $symlink_base = _calculate_symlink_base( $source_dir, $target_dir );
+    DEBUG("Symlink base: $symlink_base");
 
     my $backup_dir = $target_dir . '/.backup';
     DEBUG("Backup dir: $backup_dir");
@@ -568,9 +569,13 @@ sub install_files {
         DEBUG(" Working on $direntry");
 
         my $target = $direntry;
+        my $destination = "$symlink_base/$direntry";
 
-        if ( $install_map && $install_map->{$direntry} ) {
-            $target = $install_map->{$direntry};
+        if ( $install_overlay ) {
+            # INFO("Overlay: $install_overlay");
+            if ( -e "$symlink_base/$install_overlay/$target" ) {
+                $destination = "$symlink_base/$install_overlay/$target";
+            }
         }
         else {
             if ($install_include) {
@@ -587,13 +592,13 @@ sub install_files {
                 system("mv '$target' '$backup_dir/$target'")
                     if !$opts{'dry-run'};
             }
-            INFO("  Symlinking $target ($symlink_base/$direntry).");
-            my_symlink( "$symlink_base/$direntry", "$target" )
+            INFO("  Symlinking $target ($destination).");
+            my_symlink( "$destination", "$target" )
                 if !$opts{'dry-run'};
-        } elsif (readlink($target) ne "$symlink_base/$direntry") {
-            INFO("Correcting $target to point to $symlink_base/$direntry");
+        } elsif (readlink($target) ne "$destination") {
+            INFO("Correcting $target to point to $destination");
             unlink($target) if !$opts{'dry-run'};
-            my_symlink( "$symlink_base/$direntry", "$target" )
+            my_symlink( "$destination", "$target" )
                 if !$opts{'dry-run'};
         }
     }
@@ -630,7 +635,6 @@ sub install_files {
                 };
             }
 
-            # TODO: add install_map munging
             install_files( "$source_dir/$recurse", "$target_dir/$recurse", $recurse_options );
         }
         else {
@@ -1278,7 +1282,7 @@ This merges or rebases the upstream changes in and re-installs dotfiiles.
 
 All Options:
 
-  dfm profile add <name> [-i|--include <files>] [-e|--exclude <files>] [-m|--map <filemap>] [-n|--no-commit]
+  dfm profile add <name> [-i|--include <files>] [-e|--exclude <files>] [-m|--overlay <overlay_path>] [-n|--no-commit]
   dfm profile remove <name> [-n|--no-commit]
 
 Examples:
