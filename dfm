@@ -77,7 +77,7 @@ my $commands = {
     'profile' => sub {
         my $argv = shift;
 
-        GetOptionsFromArray( $argv, \%opts, 'include|i=s', 'exclude|e=s', 'map|m=s' );
+        GetOptionsFromArray( $argv, \%opts, 'include|i=s', 'exclude|e=s', 'map|m=s', 'no-commit|n' );
 
         my $subcommand = shift @$argv;
         my $name = shift @$argv;
@@ -91,7 +91,7 @@ my $commands = {
             add_profile( $name, \%opts );
         }
         elsif ( $subcommand eq 'remove' ) {
-            remove_profile($name);
+            remove_profile($name, \%opts );
         }
 
     },
@@ -450,11 +450,18 @@ sub load_profile {
 }
 
 sub remove_profile {
-    my ($name) = @_;
+    my ( $name, $opts ) = @_;
+
+    # check if the profile exists
+    load_profile($name);
 
     my $profile_config = _abs_repo_path( $home, $repo_dir ) . "/.dfm_profiles";
 
     remove_config( $profile_config, $name );
+
+    if ( !$opts{'no-commit'} ) {
+        _run_git( 'commit', ".dfm_profiles", '-m', "Removing profile $name." );
+    }
 
     INFO("Removed profile $name.");
 }
@@ -486,6 +493,11 @@ sub add_profile {
         if ( my $files = $profile_info->{$type} ) {
             set_config( $profile_config, "${name}.${type}", $files );
         }
+    }
+
+    if ( !$opts{'no-commit'} ) {
+        _run_git( 'add', ".dfm_profiles" );
+        _run_git( 'commit', ".dfm_profiles", '-m', "Adding profile $name." );
     }
 
     INFO("Added profile $name.");
@@ -1261,8 +1273,8 @@ This merges or rebases the upstream changes in and re-installs dotfiiles.
 
 All Options:
 
-  dfm profile add <name> [-i|--include <files>] [-e|--exclude <files>] [-m|--map <filemap>]
-  dfm profile remove <name>
+  dfm profile add <name> [-i|--include <files>] [-e|--exclude <files>] [-m|--map <filemap>] [-n|--no-commit]
+  dfm profile remove <name> [-n|--no-commit]
 
 Examples:
 
@@ -1272,7 +1284,8 @@ Examples:
 
 Description:
 
-This command manages install profiles.
+This command manages install profiles.  It will update the profile metadata
+(held in .dfm_profiles) and then commit it, unless --no-commit is specified.
 
 =head1 dfm [git subcommand] [git options]
 
