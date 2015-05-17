@@ -359,7 +359,7 @@ sub install {
     my $install_options = {};
 
     # TODO: support ad-hoc profiles
-    my $dfm_profile_config = $home . "/.dfm_profile_state";
+    my $dfm_profile_config = $home . "/.dfm";
     my $profile;
     if ( defined($opts{'profile'} ) ) {
         if ( $profile = $opts{'profile'} ) {
