@@ -1015,11 +1015,12 @@ sub _load_dfminstall {
 
     my $dfminstall_info = {
         skip_files => {
-            '.'           => 1,
-            '..'          => 1,
-            '.dfminstall' => 1,
-            '.gitignore'  => 1,
-            '.git'        => 1,
+            '.'             => 1,
+            '..'            => 1,
+            '.dfminstall'   => 1,
+            '.dfm_profiles' => 1,
+            '.gitignore'    => 1,
+            '.git'          => 1,
         },
         recurse_files           => [],
         execute_files           => [],
