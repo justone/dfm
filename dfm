@@ -33,7 +33,7 @@ my $commands = {
         my $argv = shift;
         DEBUG("Running in [$RealBin] and installing in [$home]");
 
-        GetOptionsFromArray( $argv, \%opts, 'profile|p:s', 'include|i=s', 'exclude|e=s' );
+        GetOptionsFromArray( $argv, \%opts, 'profile|p:s' );
 
         # install files
         install( $home, $repo_dir );
@@ -1159,7 +1159,7 @@ This shows the help for a particular subcommand.
 
 All Options:
 
-  dfm install [--verbose|--quiet] [--dry-run] [-p|--profile <profile>] [-i|--include <file>] [-e|--exclude <file>] [-m|--map <filemap>]
+  dfm install [--verbose|--quiet] [--dry-run] [-p|--profile <profile>]
 
 Examples:
 
