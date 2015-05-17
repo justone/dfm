@@ -36,7 +36,7 @@ my $commands = {
         GetOptionsFromArray( $argv, \%opts, 'profile|p:s' );
 
         # install files
-        install( $home, $repo_dir );
+        install( $home, $repo_dir, \%opts );
     },
     'updates' => sub {
         my $argv = shift;
@@ -354,19 +354,19 @@ sub merge_and_install {
 }
 
 sub install {
-    my ( $home, $repo_dir ) = @_;
+    my ( $home, $repo_dir, $opts ) = @_;
 
     my $install_options = {};
 
     # TODO: support ad-hoc profiles
     my $dfm_profile_config = $home . "/.dfm";
     my $profile;
-    if ( defined($opts{'profile'} ) ) {
-        if ( $profile = $opts{'profile'} ) {
+    if ( defined($opts->{'profile'} ) ) {
+        if ( $profile = $opts->{'profile'} ) {
 
-            $install_options = load_profile( $opts{'profile'} );
+            $install_options = load_profile( $opts->{'profile'} );
 
-            set_config( $dfm_profile_config, "main.installed", $opts{'profile'} );
+            set_config( $dfm_profile_config, "main.installed", $opts->{'profile'} );
         } else {
             INFO("Reverting to default profile");
             remove_config($dfm_profile_config, "main");
@@ -381,7 +381,7 @@ sub install {
         INFO("Installing with profile $profile");
     }
 
-    INFO( "Installing dotfiles..." . ( $opts{'dry-run'} ? ' (dry run)' : '' ) );
+    INFO( "Installing dotfiles..." . ( $opts->{'dry-run'} ? ' (dry run)' : '' ) );
 
     DEBUG("Running in [$RealBin] and installing in [$home]");
 
