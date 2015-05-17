@@ -102,7 +102,6 @@ my $commands = {
 
         if ($command) {
             $command = $command_aliases->{$command} || $command;
-            print "$command\n";
 
             my %options = (
                 -verbose    => 99,
