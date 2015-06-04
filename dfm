@@ -574,7 +574,7 @@ sub install_files {
         if ( $install_overlay ) {
             # INFO("Overlay: $install_overlay");
             if ( -e "$symlink_base/$install_overlay/$target" ) {
-                $destination = "$symlink_base/$install_overlay/$target";
+                $destination = File::Spec->abs2rel( realpath("$symlink_base/$install_overlay/$target"), $target_dir );
             }
         }
         else {
@@ -633,6 +633,9 @@ sub install_files {
                         grep {/^$recurse/} @$install_exclude
                     ]
                 };
+            }
+            if ( $install_overlay ) {
+                $recurse_options->{install_overlay} = "../$install_overlay/$recurse";
             }
 
             install_files( "$source_dir/$recurse", "$target_dir/$recurse", $recurse_options );
