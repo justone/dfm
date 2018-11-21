@@ -8,7 +8,7 @@ dfm - a utility to manage dotfiles
 dfm is a small utility that manages dotfiles.  It:
 
 - makes it easy to install (and uninstall) your dotfiles on new servers
-- easys fetching and merging changes that were pushed from other machines
+- easy fetching and merging changes that were pushed from other machines
 - simplifies working with your dotfiles repository, no matter where your current directory is
 
 # DESCRIPTION
